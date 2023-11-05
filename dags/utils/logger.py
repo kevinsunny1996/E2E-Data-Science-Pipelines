@@ -1,38 +1,43 @@
 import logging
 
 class LoggerFactory(object):
-    
     _LOGGER = None
 
     @staticmethod
-    def __create_logger(log_file, log_level):
+    def __create_logger(log_level):
         '''
         A private method that interacts with the python logging module.
         '''
         # set the logging format
-        formatter = '%(asctime)s : %(name)s : %(levelname)s : %(message)s'
+        formatter = logging.Formatter(
+            '%(asctime)s : %(name)s : %(levelname)s : %(module)s : %(funcName)s : %(lineno)d :  %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
 
-        # initialize the logger object
-        LoggerFactory._LOGGER = logging.getLogger(log_file)
-        logging.basicConfig(filename=log_file, level=logging.INFO, format=formatter, datefmt='%Y-%m-%d %H:%M:%S')
+        # create a console handler and set its level
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.getLevelName(log_level))
+        console_handler.setFormatter(formatter)
 
-        # set logging level based on user input
-        if log_level == 'INFO':
-            LoggerFactory._LOGGER.setLevel(logging.INFO)
-        elif log_level == 'DEBUG':
-            LoggerFactory._LOGGER.setLevel(logging.DEBUG)
-        elif log_level == 'WARNING':
-            LoggerFactory._LOGGER.setLevel(logging.WARNING)
-        elif log_level == 'ERROR':
-            LoggerFactory._LOGGER.setLevel(logging.ERROR)
-        elif log_level == 'CRITICAL':
-            LoggerFactory._LOGGER.setLevel(logging.CRITICAL)
-        
-        return LoggerFactory._LOGGER
-    
+        # create logger and add the console handler
+        logger = logging.getLogger()
+        logger.setLevel(logging.getLevelName(log_level))
+        logger.addHandler(console_handler)
+
+        # Disable propagation to prevent log duplication
+        logger.propagate = False
+
+        # Set the 'airflow' logger's level to ERROR to prevent lower severity logs from propagating
+        airflow_logger = logging.getLogger('airflow')
+        airflow_logger.setLevel(logging.ERROR)
+
+        return logger
+
     @staticmethod
-    def get_logger(log_file, log_level):
+    def get_logger(log_level):
         '''
         A static method that's called by other modules to initialize logger on their own module
         '''
-        return LoggerFactory.__create_logger(log_file, log_level)
+        if not LoggerFactory._LOGGER:
+            LoggerFactory._LOGGER = LoggerFactory.__create_logger(log_level)
+        return LoggerFactory._LOGGER

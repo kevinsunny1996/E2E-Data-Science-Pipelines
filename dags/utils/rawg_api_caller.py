@@ -1,11 +1,11 @@
 import requests
 
 # Logger factory class import
-from logger import LoggerFactory
+from utils.logger import LoggerFactory
 
 # Custom modules import
-from gcp_utils import CloudUtils
-from url_generator import generate_full_url
+from utils.gcp_utils import CloudUtils
+from utils.url_generator import generate_full_url
 
 base_url = 'https://api.rawg.io/api'
 
@@ -23,6 +23,21 @@ class RAWGAPIResultFetcher():
           JSON Response for the endpoint - https://api.rawg.io/docs/#operation/games_list
   """
   
+  def get_tags(api_key: str) -> {}:
+    pass
+
+  def get_platforms(api_key: str) -> {}:
+    pass
+
+  def get_genres(api_key: str) -> {}:
+    pass
+
+  def get_developers(api_key: str) -> {}:
+    pass
+
+  def get_creators(api_key: str) -> {}:
+    pass
+    
   def get_games(api_key: str) -> {}:
     """
       Gets games related to the entered search query
