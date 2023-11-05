@@ -38,6 +38,20 @@ Note: Running 'astro dev start' will start your project with the Airflow Webserv
 
 You should also be able to access your Postgres Database at 'localhost:5432/postgres'.
 
+4. Connection testing is [disabled by default](https://docs.astronomer.io/learn/connections#:~:text=You%20can%20enable%20connection%20testing,Enabled%20in%20your%20Airflow%20environment.) , to do so , perform the following steps:
+    1. Add the following command - `ENV AIRFLOW__CORE__TEST_CONNECTION=Enabled`  in the Dockerfile.
+    2. Restart the setup by typing - `astro dev restart`
+
+5. Post enabling connection testing , create a file in /include/gcp directory as service_account.json , add the download service account key details and add the file name to gitignore to avoid misuse.
+
+6. Now add the following details as connections:
+    1. Connection Id - gcp
+    2. Connection Type - Google Cloud `Dropdown Selection`
+    3. Description - Airflow Service Account connection
+    4. For the **Keyfile Path** use the following command to get the path within the pod - `astro dev bash` and type pwd:
+        1. Add the following value - /usr/local/airflow/include/gcp/service_account.json
+    5. Click on Test and verify success and you're all set.
+    
 Deploy Your Project to Astronomer
 =================================
 

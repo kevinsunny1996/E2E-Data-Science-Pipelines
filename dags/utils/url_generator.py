@@ -1,3 +1,6 @@
+from utils.logger import LoggerFactory
+
+logger = LoggerFactory.get_logger('INFO')
 
 def generate_full_url(base_url: str, endpoint_name: str, api_key: str) -> str:
     """
@@ -11,6 +14,7 @@ def generate_full_url(base_url: str, endpoint_name: str, api_key: str) -> str:
         Returns:
             A full URL as a string.
     """
+    logger.info(f'{base_url}/{endpoint_name}?{api_key}')
     return f'{base_url}/{endpoint_name}?{api_key}'
 
 
