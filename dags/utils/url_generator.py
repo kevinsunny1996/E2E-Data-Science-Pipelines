@@ -14,8 +14,8 @@ def generate_full_url(base_url: str, endpoint_name: str, api_key: str) -> str:
         Returns:
             A full URL as a string.
     """
-    logger.info(f'{base_url}/{endpoint_name}?{api_key}')
-    return f'{base_url}/{endpoint_name}?{api_key}'
+    logger.info(f'{base_url}/{endpoint_name}?key={api_key}')
+    return f'{base_url}/{endpoint_name}?key={api_key}'
 
 
 if __name__ ==  "__main__":
