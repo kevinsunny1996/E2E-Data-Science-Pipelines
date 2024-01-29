@@ -10,6 +10,7 @@ from airflow.models import Variable
 
 # Custom modules import
 from utils.rawg_api_caller import RAWGAPIResultFetcher
+from utils.gcp_utils import get_gcp_connection_and_upload_to_gcs
 
 
 
@@ -24,7 +25,7 @@ default_args = {
 @dag(
     dag_id='rawg_api_extractor_dag',
     default_args=default_args,
-    description='DAG to fetch RAWG API data, convert the JSON to CSV and upload to GCS and then load it in Bigquery',
+    description='DAG to fetch RAWG API data from games/ endpoint, convert the JSON to CSV and upload to GCS and then load it in Bigquery',
     schedule=None,
     schedule_interval=None,
     start_date=datetime(2023, 9, 1),
@@ -33,9 +34,10 @@ default_args = {
 )
 def rawg_api_extractor_dag():
 
-    # Fetch variable values for API Key and Page Number
+    # Fetch variable values for API Key and Page Number and Landing bucket URL
     rawg_api_key = Variable.get('rawg_api_key')
     rawg_page_number = int(Variable.get('api_page_number', default_var=1))
+    rawg_landing_gcs_bucket = Variable.get('gcs_rawg_api_landing_bucket')
 
     # Task to get Game IDs to fetch data from in subsequent task
     @task
@@ -71,6 +73,12 @@ def rawg_api_extractor_dag():
         games_df, ratings_df, platforms_df, genre_df, publisher_df = rawg_http_client_game_detail_fetcher.get_game_details_per_id(api_key, game_ids_list, page_number)
 
         # Save the files as CSV directly to GCS , post creating GCS bucket variable
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, games_df, 'games', rawg_page_number)
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, ratings_df, 'ratings', rawg_page_number)
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, platforms_df, 'platforms', rawg_page_number)
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, genre_df, 'genres', rawg_page_number)
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, publisher_df, 'publishers', rawg_page_number)
+
         # Update page number to fetch from the consecutive one in the next run
         next_page_number = int(rawg_page_number) + 1
         Variable.set("api_page_number", next_page_number)

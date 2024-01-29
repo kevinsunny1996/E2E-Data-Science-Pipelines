@@ -12,6 +12,7 @@ base_url = 'https://api.rawg.io/api'
 file_save_path = '/usr/local/airflow/include/raw_extracted_data'
 endpoint = 'games'
 
+# Initialize loggers for each specific task
 info_logger = LoggerFactory.get_logger('INFO')
 error_logger = LoggerFactory.get_logger('ERROR')
 
@@ -26,25 +27,11 @@ class RAWGAPIResultFetcher():
         Returns:
           List containing the Game IDs
 
-        get_game_details_per_id() -> None:
-          Fetches game details for the fetched ID list and converts to CSV
+        get_game_details_per_id() -> pd.DataFrame:
+          Fetches game details for the fetched ID list and flattens them into 5 dataframes [rest 4 has game_id as foreign key] to be later written to GCS as CSV
         Returns:
-          N/A    
+          N/A as this is a class level comment
   """
-
-  # def create_session_object():
-  #   """
-  #     Generates sessions to allow usage of connection pooling
-
-  #     This method creates a session object that we can use to keep a TCP connection alive for a specific time.
-
-  #     Returns:
-  #         Session object that can be later used to make requests.
-  #   """
-  #   rawg_api_session = requests.Session()
-  #   info_logger.info(f'Generated session object: {rawg_api_session} for the current iteration.')
-
-  #   return rawg_api_session
   
   def get_unique_ids_per_endpoint(self, api_key: str, page_number: int) -> []:
     """
@@ -146,27 +133,47 @@ class RAWGAPIResultFetcher():
         games_json = response.json()
 
         # Processing steps to create Dataframe containing only game related data
-        games_df_raw = pd.json_normalize(games_json)
+        games_df_raw = pd.json_normalize(games_json, sep='_')
         games_df_filtered = games_df_raw[keys_game_ids_df_response]
         games_df = pd.concat([games_df, games_df_filtered], ignore_index=True)
 
         # Processing steps to create Dataframe containing only Ratings related Data
         # Use the ID key to use as Foreign Key while loading into DB
-        ratings_df_flattened = pd.json_normalize(games_json, record_path=['ratings'], meta=['id'], meta_prefix='ratings_game_')
+        ratings_df_flattened = pd.json_normalize(games_json, sep='_', record_path=['ratings'], meta=['id'], meta_prefix='game_')
         ratings_df = pd.concat([ratings_df, ratings_df_flattened], ignore_index=True)
 
         # Preprocessing steps to create Dataframe containing platforms data
-        platforms_df_flattened = pd.json_normalize(games_json, record_path=['platforms'], meta=['id'], meta_prefix='platforms_game_')
+        platforms_df_flattened = pd.json_normalize(games_json, sep='_', record_path=['platforms'], meta=['id'], meta_prefix='game_')
         platforms_df = pd.concat([platforms_df, platforms_df_flattened], ignore_index=True)
+        # Select the columns which contains the name requirements to be later removed as they have unwanted characters.
+        # These fields will be later retrieved for upcoming work.
+        columns_to_remove = platforms_df.filter(like='requirements_').columns
+        info_logger.info(f"Following columns will be removed from platforms_df - {columns_to_remove}")
+        platforms_df = platforms_df.drop(columns=columns_to_remove)
 
         # Preprocessing steps to create Dataframe containing Genre data
-        genre_df_flattened = pd.json_normalize(games_json, record_path=['genres'], meta=['id'], meta_prefix='genre_game_')
+        genre_df_flattened = pd.json_normalize(games_json, sep='_', record_path=['genres'], meta=['id'], meta_prefix='game_')
         genre_df = pd.concat([genre_df, genre_df_flattened], ignore_index=True)
         
         # Preprocessing steps to create Dataframe containing Publisher data
-        publisher_df_flattened = pd.json_normalize(games_json, record_path=['publishers'], meta=['id'], meta_prefix='publisher_game_')
+        publisher_df_flattened = pd.json_normalize(games_json, sep='_', record_path=['publishers'], meta=['id'], meta_prefix='game_')
         publisher_df = pd.concat([publisher_df, publisher_df_flattened], ignore_index=True)
 
     # Log the dimensions of each flattened file for tracking
     info_logger.info(f"Dimension of the data fetched and flattened for the following #{page_number} iteration: Games Table {games_df.shape}, Ratings Table {ratings_df.shape}, Platforms Table {platforms_df.shape}, Genre Table {genre_df.shape}, Publisher Table {publisher_df.shape}")
+    info_logger.info(f"Following are the columns of the games table========")
+    info_logger.info(f"{games_df.columns}")
+
+    info_logger.info(f"Following are the columns of the ratings table========")
+    info_logger.info(f"{ratings_df.columns}")
+
+    info_logger.info(f"Following are the columns of the platforms table========")
+    info_logger.info(f"{platforms_df.columns}")
+
+    info_logger.info(f"Following are the columns of the genre table========")
+    info_logger.info(f"{genre_df.columns}")
+
+    info_logger.info(f"Following are the columns of the publisher table========")
+    info_logger.info(f"{publisher_df.columns}")
+
     return games_df, ratings_df, platforms_df, genre_df, publisher_df
