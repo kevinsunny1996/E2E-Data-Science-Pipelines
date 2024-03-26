@@ -1,5 +1,5 @@
 # Astro Runtime includes the following pre-installed providers packages: https://docs.astronomer.io/astro/runtime-image-architecture#provider-packages
-apache-airflow-providers-google==10.12.0
+apache-airflow-providers-google==10.13.1
 google-cloud-secret-manager==2.16.1
-gcsfs==2023.12.1
-google-cloud-storage==2.13.0
+gcsfs==2024.2.0
+google-cloud-storage==2.15.0
