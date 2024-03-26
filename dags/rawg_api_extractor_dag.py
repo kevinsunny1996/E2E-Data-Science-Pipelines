@@ -1,12 +1,14 @@
 # Airflow modules import
 from datetime import datetime, timedelta
-from airflow.decorators import dag, task
+from airflow.decorators import dag, task, task_group
 from airflow.operators.python import PythonOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.providers.google.cloud.hooks.secret_manager import SecretsManagerHook
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
+from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateEmptyTableOperator
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
+
 
 # Custom modules import
 from utils.rawg_api_caller import RAWGAPIResultFetcher
@@ -19,6 +21,58 @@ default_args = {
     'owner': 'airflow',
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
+}
+
+# Instance of Schema to be passed for creating empty tables to be later loaded to
+table_schemas = {
+    'ratings': [
+        {'name': 'id','type': 'INTEGER','mode': 'REQUIRED','description': 'Ratings ID corresponding to the rating given to a game'},
+        {'name': 'title','type': 'STRING','mode': 'NULLABLE','description': 'Rating Type Corresponding to the respective Rating ID'},
+        {'name': 'count','type': 'INTEGER','mode': 'NULLABLE','description': 'Number of games with the given rating , eg- Recommended for 30 games etc.'},
+        {'name': 'percent','type': 'FLOAT','mode': 'NULLABLE','description': 'Percentage of games with the given rating'},
+        {'name': 'game_id','type': 'INTEGER','mode': 'REQUIRED','description':'Foreign key to map to gaming product table game ID'}
+    ],
+    'games': [
+        {'name': 'id','type': 'INTEGER','mode': 'REQUIRED','description': 'Game ID for the given game'},
+        {'name': 'slug','type': 'STRING','mode': 'NULLABLE','description': 'Slug version of the game name , eg- resident-evil-4'},
+        {'name': 'name_original','type': 'STRING','mode': 'NULLABLE','description': 'Actual official name of the game'},
+        {'name': 'description_raw','type': 'STRING','mode': 'NULLABLE','description': 'Game Description'},
+        {'name': 'metacritic','type': 'FLOAT','mode':'REQUIRED','description': 'Metacritic rating of the game'},
+        {'name': 'released','type': 'DATE','mode':'REQUIRED','description':'Release date of the game in format YYYY-MM-DD'},
+        {'name': 'tba','type': 'BOOLEAN','mode': 'REQUIRED','description': 'Is the game yet to be announced?'},
+        {'name': 'updated','type': 'DATETIME','mode': 'REQUIRED','description': 'Time and date when the data was last updated'},
+        {'name': 'rating','type': 'FLOAT','mode': 'REQUIRED','description': 'Rating of the game from 1 to 5'},
+        {'name': 'rating_top','type': 'NUMERIC','mode': 'REQUIRED','description': 'Max Average Rating given to that game, relates to id of ratings table'},
+        {'name': 'playtime','type': 'FLOAT','mode': 'REQUIRED','description': 'Playtime for the game in minutes'}
+    ],
+    'genres': [
+        {'name': 'id','type': 'INTEGER','mode': 'REQUIRED','description': 'Genre ID for the given game'},
+        {'name': 'name','type': 'STRING','mode': 'NULLABLE','description': 'Name of the genre , eg- Adventure, Action etc.'},
+        {'name': 'slug','type': 'STRING','mode': 'NULLABLE','description': 'Lower case name of the genre , eg- adventure, action etc.'},
+        {'name': 'games_count','type': 'INTEGER','mode': 'NULLABLE','description': 'Count of games for that genre'},
+        {'name': 'image_background','type': 'STRING','mode': 'REQUIRED','description': 'Image background URL'},
+        {'name': 'game_id','type': 'INTEGER','mode': 'REQUIRED','description': 'Game ID , foreign key of Games table'}
+    ],
+    'platforms': [
+        {'name': 'released_at','type': 'DATE','mode': 'NULLABLE','description': 'Release date of the game on the respective platform in format YYYY-MM-DD'},
+        {'name': 'platform_id','type': 'INTEGER','mode': 'REQUIRED','description': 'Platform ID for the given platform'},
+        {'name': 'platform_name','type': 'STRING','mode': 'REQUIRED','description': 'Platform Name'},
+        {'name': 'platform_slug','type': 'STRING','mode': 'REQUIRED','description': 'Lower case platform name'},
+        {'name': 'platform_image','type': 'STRING','mode': 'NULLABLE','description': 'Platform Image URL'},
+        {'name': 'platform_year_end','type': 'FLOAT','mode': 'NULLABLE','description': 'End Year for the given platform'},
+        {'name': 'platform_year_start','type': 'FLOAT','mode': 'NULLABLE','description': 'Start Year for the given platform'},
+        {'name': 'platform_games_count','type': 'INTEGER','mode': 'NULLABLE','description': 'Count of games for that platform'},
+        {'name': 'platform_image_background','type': 'STRING','mode': 'NULLABLE','description': 'Platform image background URL'},
+        {'name': 'game_id','type': 'INTEGER','mode': 'REQUIRED','description': 'Game ID for the given game used as foreign key in games table'}
+    ],
+    "publishers": [
+        {'name': 'id','type': 'INTEGER','mode': 'REQUIRED','description': 'Publisher ID for the given game'},
+        {'name': 'name','type': 'STRING','mode': 'REQUIRED','description': 'Name of the publisher'},
+        {'name': 'slug','type': 'STRING','mode': 'REQUIRED','description': 'Lower case name of the publisher'},
+        {'name': 'games_count','type': 'INTEGER','mode': 'NULLABLE','description': 'Count of games for that publisher'},
+        {'name': 'image_background','type': 'STRING','mode': 'NULLABLE','description': 'Image background URL'},
+        {'name': 'game_id','type': 'INTEGER','mode': 'REQUIRED','description': 'Game ID for the given game used as foreign key in games table'}
+    ]
 }
 
 # DAG definition
@@ -59,7 +113,7 @@ def rawg_api_extractor_dag():
     @task
     def get_game_id_related_data(api_key: str, game_ids_list: list, page_number: int) -> None:
         """
-            Fetches individual entries for Game ID which will be flattened to convert to 5 csv tables and save to local file path.
+            Fetches individual entries for Game ID which will be flattened to convert to 5 csv tables and writes the CSV files to remote Cloud Storage.
 
             Args:
                 api_key: Needed to make calls to RAWG API , required for every call per documentation.
@@ -83,9 +137,31 @@ def rawg_api_extractor_dag():
         next_page_number = int(rawg_page_number) + 1
         Variable.set("api_page_number", next_page_number)
 
+    # Create Empty Table for Schema defined for the 5 tables created as output
+    @task
+    def create_rawg_api_placeholder_empty_table(table_name: str, schema: list) -> None:
+        create_empty_table_task = BigQueryCreateEmptyTableOperator(
+            task_id=f'create_empty_table_for_{table_name}',
+            dataset_id='rawg_api_elt_dataset',  # Set your BigQuery dataset ID
+            table_id=table_name,
+            project_id='exemplary-tide-379122',  # Set your BigQuery project ID
+            schema_fields=schema,
+            gcp_conn_id='gcp',  # Set your GCP connection ID
+            if_exists='skip'  # Skip creating the table if it already exists
+        )
+        create_empty_table_task.execute(context={})
+    
+    @task_group
+    def placeholder_empty_table_task_group():
+        for table_name, schema in table_schemas.items():
+            create_rawg_api_placeholder_empty_table(table_name, schema)
 
+    # DAG Flow
     game_ids_list = get_rawg_api_game_ids(rawg_api_key, rawg_page_number)
     game_details_extractor = get_game_id_related_data(rawg_api_key, game_ids_list, rawg_page_number)
+    placeholder_empty_table_tasks = placeholder_empty_table_task_group()
+
+    game_ids_list >> game_details_extractor >> placeholder_empty_table_tasks
 
 
 rawg_api_extractor_dag()
