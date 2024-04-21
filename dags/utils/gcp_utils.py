@@ -11,8 +11,15 @@ import traceback
 # Pandas Library import 
 import pandas as pd
 
+# Pyarrow Library import
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 # JSON Library import
 import json
+
+# import io 
+from io import BytesIO
 
 info_logger = LoggerFactory.get_logger('INFO')
 error_logger = LoggerFactory.get_logger('ERROR')
@@ -51,15 +58,37 @@ def get_gcp_connection_and_upload_to_gcs(bucket_name: str, dataframe_name: pd.Da
     # Intialize bucket object 
     bucket = client.bucket(bucket_name)
 
+    if dataframe_name.columns.equals(['id', 'slug', 'name_original', 'description_raw', 'metacritic', 'released', 'tba', 'updated', 'rating', 'rating_top', 'playtime']):
+        # Override the schema of the dataframe to suit the bigquery table schema
+        schema = pa.schema([
+            ('id', pa.int32()),
+            ('slug', pa.string()),
+            ('name_original', pa.string()),
+            ('description_raw', pa.string()),
+            ('metacritic', pa.string()),
+            ('released', pa.date32()),
+            ('tba', pa.bool_()),
+            ('updated', pa.timestamp('s')),
+            ('rating', pa.float64()),
+            ('rating_top', pa.int32()),
+            ('playtime', pa.int32())
+        ])
+        product_parquet_table = pa.Table.from_pandas(dataframe_name, schema=schema, preserve_index=False)
+    else:
+        # Other dataframes than games_df will be stored in parquet format without any schema change
+        product_parquet_table = pa.Table.from_pandas(dataframe_name, preserve_index=False)
     # Convert dataframe to CSV string
-    csv_data = dataframe_name.to_csv(index=False)
+    # parquet_data = dataframe_name.to_parquet(index=False)
 
-    # Upload CSV to GCS 
+    parquet_data = BytesIO()
+    pq.write_table(product_parquet_table, parquet_data)
+
+    # Upload Parquet to GCS 
     try:
         # blob_name is the file name that needs to be created as placeholder at GCS end to write file into
-        blob_name = f'{blob_file_name}_{api_page_number}.csv'
+        blob_name = f'{blob_file_name}_{api_page_number}.parquet'
         blob = bucket.blob(blob_name)
-        blob.upload_from_string(csv_data, content_type='text/csv')
+        blob.upload_from_string(parquet_data.getvalue(), content_type='application/octet-stream')
         info_logger.info(f'Loaded file {blob_name} to bucket {bucket_name} successfully')
     except Exception as e:
         error_logger.error(f'Received following error while uploading {blob_name}, see full trace : {e}')

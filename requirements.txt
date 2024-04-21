@@ -3,3 +3,4 @@ apache-airflow-providers-google==10.13.1
 google-cloud-secret-manager==2.16.1
 gcsfs==2024.2.0
 google-cloud-storage==2.15.0
+pyarrow==15.0.2

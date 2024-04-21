@@ -66,7 +66,9 @@ class RAWGAPIResultFetcher():
     endpoint_params = {
       'page_size': '10000',
       'page': page_number,
-      'platforms_count': '6'
+      'ordering': 'released',
+      'parent_platforms':'1,2,3,4,5,6,7,8,9,10',
+      'dates':'1990-01-01,2023-12-12'
     }
 
     endpoint_response = requests.get(generate_api_url, params=endpoint_params)
@@ -159,10 +161,16 @@ class RAWGAPIResultFetcher():
         publisher_df_flattened = pd.json_normalize(games_json, sep='_', record_path=['publishers'], meta=['id'], meta_prefix='game_')
         publisher_df = pd.concat([publisher_df, publisher_df_flattened], ignore_index=True)
 
+    # Update the released and updated columns to datetime64 format
+    games_df['released'] = pd.to_datetime(games_df['released'], format='%Y-%m-%d')
+    games_df['updated'] = pd.to_datetime(games_df['updated'])
+
     # Log the dimensions of each flattened file for tracking
     info_logger.info(f"Dimension of the data fetched and flattened for the following #{page_number} iteration: Games Table {games_df.shape}, Ratings Table {ratings_df.shape}, Platforms Table {platforms_df.shape}, Genre Table {genre_df.shape}, Publisher Table {publisher_df.shape}")
     info_logger.info(f"Following are the columns of the games table========")
     info_logger.info(f"{games_df.columns}")
+    info_logger.info(f"Following are the datatypes of the games table========")
+    info_logger.info(f"{games_df.dtypes}")
 
     info_logger.info(f"Following are the columns of the ratings table========")
     info_logger.info(f"{ratings_df.columns}")
