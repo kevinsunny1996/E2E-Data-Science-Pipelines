@@ -1,5 +1,6 @@
 # Airflow Base Hook to get connection
 from airflow.hooks.base import BaseHook
+from airflow.providers.google.common.hooks.base_google import GoogleBaseHook
 
 # GCS Python Library
 from google.cloud import storage
@@ -45,15 +46,18 @@ def get_gcp_connection_and_upload_to_gcs(bucket_name: str, dataframe_name: pd.Da
     airflow_service_account_connection = 'gcp'
 
     # Get the connection to GCP using the service account
-    gcp_connection_sa = BaseHook.get_connection(conn_id=airflow_service_account_connection)
-    info_logger.info(f'Retrieved connection: {gcp_connection_sa.conn_id}') 
+    # gcp_connection_sa = BaseHook.get_connection(conn_id=airflow_service_account_connection)
+    gcp_file_upload_hook = GoogleBaseHook(gcp_conn_id=airflow_service_account_connection)
+    sa_creds = gcp_file_upload_hook.get_credentials()
+    # info_logger.info(f'Retrieved connection: {gcp_connection_sa.conn_id}') 
     
     # Get the credentials from the connection
-    gcp_connection_sa_credentials = gcp_connection_sa.extra_dejson['key_path']
-    info_logger.info(f'Retrieved credentials: {gcp_connection_sa_credentials}') 
+    # gcp_connection_sa_credentials = gcp_connection_sa.extra_dejson['key_path']
+    # info_logger.info(f'Retrieved credentials: {gcp_connection_sa_credentials}') 
 
     # Initialize GCS client
-    client = storage.Client.from_service_account_json(gcp_connection_sa_credentials)
+    # client = storage.Client.from_service_account_json(gcp_connection_sa_credentials)
+    client = storage.Client(credentials=sa_creds,project=gcp_file_upload_hook.project_id)
 
     # Intialize bucket object 
     bucket = client.bucket(bucket_name)
