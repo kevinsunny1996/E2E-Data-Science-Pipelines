@@ -55,7 +55,7 @@ schema_games = [
     {
         "name": "released",
         "mode": "NULLABLE",
-        "type": "DATE",
+        "type": "STRING",
         "description": "",
         "fields": []
     },
@@ -69,7 +69,7 @@ schema_games = [
     {
         "name": "updated",
         "mode": "NULLABLE",
-        "type": "TIMESTAMP",
+        "type": "STRING",
         "description": "",
         "fields": []
     },
@@ -103,12 +103,171 @@ schema_games = [
     }
 ]
 
+# Schema for genre table
+schema_genres = [
+  {
+    "name": "id",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "name",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "slug",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "games_count",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "image_background",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "game_id",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  }
+]
+
+# Schema for platforms table
+schema_platforms = [
+  {
+    "name": "released_at",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "platform_id",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "platform_name",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "platform_slug",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "platform_image",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "platform_year_end",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "platform_games_count",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "platform_image_background",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "game_id",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "platform_year_start",
+    "mode": "",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  }
+]
+
+# Schema for ratings table
+schema_ratings = [
+  {
+    "name": "id",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "title",
+    "mode": "NULLABLE",
+    "type": "STRING",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "count",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "percent",
+    "mode": "NULLABLE",
+    "type": "FLOAT",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "game_id",
+    "mode": "NULLABLE",
+    "type": "INTEGER",
+    "description": "",
+    "fields": []
+  }
+]
+
 # Schema for publishers table
 schema_publishers = [
     {
         "name": "id",
         "mode": "NULLABLE",
-        "type": "FLOAT",
+        "type": "INTEGER",
         "description": "",
         "fields": []
     },
@@ -129,7 +288,7 @@ schema_publishers = [
     {
         "name": "games_count",
         "mode": "NULLABLE",
-        "type": "FLOAT",
+        "type": "INTEGER",
         "description": "",
         "fields": []
     },
@@ -204,24 +363,28 @@ def rawg_api_extractor_dag():
 
         # Save the files as CSV directly to GCS , post creating GCS bucket variable
         get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, games_df, 'games', rawg_page_number)
-        # get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, ratings_df, 'ratings', rawg_page_number)
-        # get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, platforms_df, 'platforms', rawg_page_number)
-        # get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, genre_df, 'genres', rawg_page_number)
-        # get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, publisher_df, 'publishers', rawg_page_number)
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, ratings_df, 'ratings', rawg_page_number)
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, platforms_df, 'platforms', rawg_page_number)
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, genre_df, 'genres', rawg_page_number)
+        get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, publisher_df, 'publishers', rawg_page_number)
 
     
     # Load contents from GCS onto BigQuery for that run
-    # load_rawg_api_ratings_data_to_bq = GCSToBigQueryOperator(
-    #         task_id=f'load_ratings_to_bq',
-    #         bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
-    #         source_objects=[f'ratings_{rawg_page_number}.csv'],  # Set the name of the CSV file in GCS
-    #         source_format='csv',
-    #         destination_project_dataset_table=f'{rawg_api_bq_dataset}.ratings',  # Set your BigQuery table name to load the data to.
-    #         gcp_conn_id='gcp',  # Set your GCP connection ID.
-    #         create_disposition='CREATE_IF_NEEDED',
-    #         write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
-    #         skip_leading_rows=1 # Skip the header row in the CSV file.
-    # )
+    load_rawg_api_ratings_data_to_bq = GCSToBigQueryOperator(
+            task_id=f'load_ratings_to_bq',
+            bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
+            source_objects=[f'ratings_{rawg_page_number}.parquet'],  # Set the name of the CSV file in GCS
+            source_format='PARQUET',
+            destination_project_dataset_table=f'{rawg_api_bq_dataset}.ratings',  # Set your BigQuery table name to load the data to.
+            gcp_conn_id='gcp',  # Set your GCP connection ID.
+            allow_quoted_newlines=True,
+            ignore_unknown_values=True,
+            schema_fields=schema_ratings,
+            create_disposition='CREATE_IF_NEEDED',
+            autodetect=False,
+            write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
+            skip_leading_rows=1 # Skip the header row in the CSV file.
+    )
 
     load_rawg_api_games_data_to_bq = GCSToBigQueryOperator(
             task_id=f'load_games_to_bq',
@@ -230,7 +393,6 @@ def rawg_api_extractor_dag():
             source_format='PARQUET',
             allow_quoted_newlines=True,
             ignore_unknown_values=True,
-            # max_bad_records=40,
             destination_project_dataset_table=f'{rawg_api_bq_dataset}.games',  # Set your BigQuery table name to load the data to.
             gcp_conn_id='gcp',  # Set your GCP connection ID.
             create_disposition='CREATE_IF_NEEDED',
@@ -240,72 +402,79 @@ def rawg_api_extractor_dag():
             skip_leading_rows=1 # Skip the header row in the CSV file.
     )
 
-    # load_rawg_api_genres_data_to_bq = GCSToBigQueryOperator(
-    #         task_id=f'load_genres_to_bq',
-    #         bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
-    #         source_objects=[f'genres_{rawg_page_number}.csv'],  # Set the name of the CSV file in GCS
-    #         source_format='csv',
-    #         destination_project_dataset_table=f'{rawg_api_bq_dataset}.genres',  # Set your BigQuery table name to load the data to.
-    #         gcp_conn_id='gcp',  # Set your GCP connection ID.
-    #         create_disposition='CREATE_IF_NEEDED',
-    #         write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
-    #         skip_leading_rows=1 # Skip the header row in the CSV file.
-    # )
+    load_rawg_api_genres_data_to_bq = GCSToBigQueryOperator(
+            task_id=f'load_genres_to_bq',
+            bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
+            source_objects=[f'genres_{rawg_page_number}.parquet'],  # Set the name of the CSV file in GCS
+            source_format='PARQUET',
+            allow_quoted_newlines=True,
+            ignore_unknown_values=True,
+            destination_project_dataset_table=f'{rawg_api_bq_dataset}.genres',  # Set your BigQuery table name to load the data to.
+            gcp_conn_id='gcp',  # Set your GCP connection ID.
+            create_disposition='CREATE_IF_NEEDED',
+            write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
+            schema_fields=schema_genres,
+            autodetect=False,
+            skip_leading_rows=1 # Skip the header row in the CSV file.
+    )
 
-    # load_rawg_api_platforms_data_to_bq = GCSToBigQueryOperator(
-    #         task_id=f'load_platforms_to_bq',
-    #         bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
-    #         source_objects=[f'platforms_{rawg_page_number}.csv'],  # Set the name of the CSV file in GCS
-    #         source_format='csv',
-    #         destination_project_dataset_table=f'{rawg_api_bq_dataset}.platforms',  # Set your BigQuery table name to load the data to.
-    #         gcp_conn_id='gcp',  # Set your GCP connection ID.
-    #         create_disposition='CREATE_IF_NEEDED',
-    #         write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
-    #         skip_leading_rows=1 # Skip the header row in the CSV file.
-    # )
+    load_rawg_api_platforms_data_to_bq = GCSToBigQueryOperator(
+            task_id=f'load_platforms_to_bq',
+            bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
+            source_objects=[f'platforms_{rawg_page_number}.parquet'],  # Set the name of the CSV file in GCS
+            source_format='PARQUET',
+            allow_quoted_newlines=True,
+            ignore_unknown_values=True,
+            destination_project_dataset_table=f'{rawg_api_bq_dataset}.platforms',  # Set your BigQuery table name to load the data to.
+            gcp_conn_id='gcp',  # Set your GCP connection ID.
+            create_disposition='CREATE_IF_NEEDED',
+            schema_fields=schema_platforms,
+            autodetect=False,
+            write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
+            skip_leading_rows=1 # Skip the header row in the CSV file.
+    )
 
-    # load_rawg_api_publishers_data_to_bq = GCSToBigQueryOperator(
-    #         task_id=f'load_publishers_to_bq',
-    #         bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
-    #         source_objects=[f'publishers_{rawg_page_number}.csv'],  # Set the name of the CSV file in GCS
-    #         source_format='csv',
-    #         destination_project_dataset_table=f'{rawg_api_bq_dataset}.publishers',  # Set your BigQuery table name to load the data to.
-    #         gcp_conn_id='gcp',  # Set your GCP connection ID.
-    #         create_disposition='CREATE_IF_NEEDED',
-    #         write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
-    #         skip_leading_rows=1, # Skip the header row in the CSV file.
-    #         autodetect=False,
-    #         schema_fields=schema_publishers,
-    #         allow_quoted_newlines=True,
-    #         ignore_unknown_values=True,
-    #         max_bad_records=40
-    # )
+    load_rawg_api_publishers_data_to_bq = GCSToBigQueryOperator(
+            task_id=f'load_publishers_to_bq',
+            bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
+            source_objects=[f'publishers_{rawg_page_number}.parquet'],  # Set the name of the CSV file in GCS
+            source_format='PARQUET',
+            destination_project_dataset_table=f'{rawg_api_bq_dataset}.publishers',  # Set your BigQuery table name to load the data to.
+            gcp_conn_id='gcp',  # Set your GCP connection ID.
+            create_disposition='CREATE_IF_NEEDED',
+            write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
+            skip_leading_rows=1, # Skip the header row in the CSV file.
+            autodetect=False,
+            schema_fields=schema_publishers,
+            allow_quoted_newlines=True,
+            ignore_unknown_values=True,
+            max_bad_records=40
+    )
 
-    # @task
-    # def remove_extracted_api_csv(bucket_name: str) -> None:
-    #     rawg_api_gcs_hook = GCSHook(gcp_conn_id='gcp')
+    @task
+    def remove_extracted_api_parquet_files(bucket_name: str) -> None:
+        rawg_api_gcs_hook = GCSHook(gcp_conn_id='gcp')
 
-    #     # Get the files to delete
-    #     api_csv_files = rawg_api_gcs_hook.list(bucket_name)
+        # Get the files to delete
+        api_parquet_files = rawg_api_gcs_hook.list(bucket_name)
 
-    #     # Delete the files
-    #     for api_file in api_csv_files:
-    #         rawg_api_gcs_hook.delete(bucket_name, api_file)
+        # Delete the files
+        for api_file in api_parquet_files:
+            rawg_api_gcs_hook.delete(bucket_name, api_file)
 
-    # @task
-    # def update_page_number(rawg_page_number: int) -> int:
-    #     # Update page number to fetch from the consecutive one in the next run
-    #     next_page_number = int(rawg_page_number) + 1
-    #     Variable.set("api_page_number", next_page_number)
+    @task
+    def update_page_number(rawg_page_number: int) -> int:
+        # Update page number to fetch from the consecutive one in the next run
+        next_page_number = int(rawg_page_number) + 1
+        Variable.set("api_page_number", next_page_number)
 
     # DAG Flow
     game_ids_list = get_rawg_api_game_ids(rawg_api_key, rawg_page_number)
     game_details_extractor = get_game_id_related_data(rawg_api_key, game_ids_list, rawg_page_number)
-    # clear_extracted_csv_files = remove_extracted_api_csv(rawg_landing_gcs_bucket)
-    # next_page_number = update_page_number(rawg_page_number)
+    clear_extracted_parquet_files = remove_extracted_api_parquet_files(rawg_landing_gcs_bucket)
+    next_page_number = update_page_number(rawg_page_number)
 
-    game_ids_list >> game_details_extractor >> load_rawg_api_games_data_to_bq
-    # >> load_rawg_api_ratings_data_to_bq >> load_rawg_api_games_data_to_bq >> load_rawg_api_genres_data_to_bq >> load_rawg_api_platforms_data_to_bq >> load_rawg_api_publishers_data_to_bq >> clear_extracted_csv_files >> next_page_number
+    game_ids_list >> game_details_extractor >> load_rawg_api_ratings_data_to_bq >> load_rawg_api_games_data_to_bq >> load_rawg_api_genres_data_to_bq >> load_rawg_api_platforms_data_to_bq >> load_rawg_api_publishers_data_to_bq >> clear_extracted_parquet_files >> next_page_number
 
 
 rawg_api_extractor_dag()

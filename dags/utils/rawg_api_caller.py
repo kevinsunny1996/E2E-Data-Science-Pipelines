@@ -161,9 +161,39 @@ class RAWGAPIResultFetcher():
         publisher_df_flattened = pd.json_normalize(games_json, sep='_', record_path=['publishers'], meta=['id'], meta_prefix='game_')
         publisher_df = pd.concat([publisher_df, publisher_df_flattened], ignore_index=True)
 
-    # Update the released and updated columns to datetime64 format
+    # Enforcing datatypes for columns of games dataframe
+    games_df['id'] = games_df['id'].astype(int)
     games_df['released'] = pd.to_datetime(games_df['released'], format='%Y-%m-%d')
+    games_df['released'] = games_df['released'].astype(str)
     games_df['updated'] = pd.to_datetime(games_df['updated'])
+    games_df['updated'] = games_df['updated'].astype(str)
+    games_df['rating_top'] = games_df['rating_top'].astype(int)
+    games_df['playtime'] = games_df['playtime'].astype(int)
+    games_df['metacritic'] = games_df['metacritic'].astype(str)
+
+    # Enforcing datatypes for columns of genres dataframe
+    genre_df['id'] = genre_df['id'].astype(int)
+    genre_df['games_count'] = genre_df['games_count'].astype(int)
+    genre_df['game_id'] = genre_df['game_id'].astype(int)
+
+    # Enforcing datatypes for columns of platforms dataframe
+    platforms_df['released_at'] = pd.to_datetime(platforms_df['released_at'], format='%Y-%m-%d')
+    platforms_df['released_at'] = platforms_df['released_at'].astype(str)
+    platforms_df['platform_id'] = platforms_df['platform_id'].astype(int)
+    platforms_df['platform_games_count'] = platforms_df['platform_games_count'].astype(int)
+    platforms_df['game_id'] = platforms_df['game_id'].astype(int)
+
+    # Enforcing datatypes for columns of publisher dataframe
+    publisher_df['id'] = publisher_df['id'].astype(int)
+    publisher_df['games_count'] = publisher_df['games_count'].astype(int)
+    publisher_df['game_id'] = publisher_df['game_id'].astype(int)
+
+    # Enforcing datatypes for columns of ratings dataframe
+    ratings_df['id'] = ratings_df['id'].astype(int)
+    ratings_df['count'] = ratings_df['count'].astype(int)
+    ratings_df['percent'] = ratings_df['percent'].astype(float)
+    ratings_df['game_id'] = ratings_df['game_id'].astype(int)
+
 
     # Log the dimensions of each flattened file for tracking
     info_logger.info(f"Dimension of the data fetched and flattened for the following #{page_number} iteration: Games Table {games_df.shape}, Ratings Table {ratings_df.shape}, Platforms Table {platforms_df.shape}, Genre Table {genre_df.shape}, Publisher Table {publisher_df.shape}")
