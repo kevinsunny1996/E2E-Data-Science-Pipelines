@@ -182,6 +182,7 @@ class RAWGAPIResultFetcher():
     platforms_df['platform_id'] = platforms_df['platform_id'].astype(int)
     platforms_df['platform_games_count'] = platforms_df['platform_games_count'].astype(int)
     platforms_df['game_id'] = platforms_df['game_id'].astype(int)
+    platforms_df['platform_year_start'] = platforms_df['platform_year_start'].astype(str)
 
     # Enforcing datatypes for columns of publisher dataframe
     publisher_df['id'] = publisher_df['id'].astype(int)
