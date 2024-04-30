@@ -474,8 +474,8 @@ def rawg_api_extractor_dag():
     clear_extracted_parquet_files = remove_extracted_api_parquet_files(rawg_landing_gcs_bucket)
     next_page_number = update_page_number(rawg_page_number)
 
-    game_ids_list >> game_details_extractor >> load_rawg_api_ratings_data_to_bq >> load_rawg_api_games_data_to_bq >> load_rawg_api_genres_data_to_bq >> load_rawg_api_platforms_data_to_bq >> load_rawg_api_publishers_data_to_bq >> clear_extracted_parquet_files >> next_page_number
-
+    game_ids_list >> game_details_extractor  >> load_rawg_api_platforms_data_to_bq >> load_rawg_api_publishers_data_to_bq >> clear_extracted_parquet_files >> next_page_number
+# >> load_rawg_api_ratings_data_to_bq >> load_rawg_api_games_data_to_bq >> load_rawg_api_genres_data_to_bq
 
 rawg_api_extractor_dag()
 
