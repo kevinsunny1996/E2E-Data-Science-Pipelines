@@ -1,9 +1,20 @@
 Overview
 ========
 
-Data Pipelines for an upcoming End to End Data Science Project...
-Currently , EL pipeline is in progress.
-For transform stage , we'll be using DBT cloud to work on so that will be tracked under a separate repository.
+The following data pipeline is part of an ongoing Data Analysis project which involves analyzing Gaming Industry data for the last 30 years from `1990-2023`.
+In order to showcase data extraction capabilities , data from readymade sources like Kaggle etc are discouraged and dataset is being built from scratch using [RAWG API](https://rawg.io/apidocs).
+
+Why RAWG API?
+- Has generous request limit count for free tier refreshes to 20k requests per month.
+- Has comprehensive data regarding games, publishers, ratings (user rating and metacritic), Genres, and platforms and can be queries using the number of platforms a game has released or the parent platform IDs for a given platform.
+- Uses API key , so its easier for people dipping their feet in the world of data to implement extraction logic.
+- Has separate links to fetch reddit posts related to a game as well which can be further used for sentiment analysis.
+
+Using the setup that will be talked about below, we would be fetching close to `250` pages worth of gaming data which is currently present at the time of writing in RAWG API side!!!
+
+There are 5 input files that will be created as part of JSON flattening / normalization to load to respective Bigquery tables resulting in total: `250*5` = `1250` files!!!
+
+Each table will contain on an average `40 rows` of gaming related data so close to `1250*40` = `50000` 50k rows will be loaded onto Bigquery for this project!!! 
 
 Flow Diagram
 =============
