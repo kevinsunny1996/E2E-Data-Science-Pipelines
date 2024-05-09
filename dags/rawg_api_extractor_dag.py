@@ -5,6 +5,8 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 
+from airflow.exceptions import AirflowSkipException
+
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
 
@@ -12,7 +14,6 @@ from airflow.models import Variable
 # Custom modules import
 from utils.rawg_api_caller import RAWGAPIResultFetcher
 from utils.gcp_utils import get_gcp_connection_and_upload_to_gcs
-
 
 
 # Default DAG arguments
@@ -313,8 +314,8 @@ schema_publishers = [
     dag_id='rawg_api_extractor_dag',
     default_args=default_args,
     description='DAG to fetch RAWG API data from games/ endpoint, convert the JSON to CSV and upload to GCS and then load it in Bigquery',
-    schedule=None,
-    schedule_interval='*/6 * * * *',
+    # schedule=None,
+    schedule_interval='*/3 * * * *',
     start_date=datetime(2023, 9, 1),
     tags=['rawg_api_elt'],
     catchup=False
@@ -327,6 +328,14 @@ def rawg_api_extractor_dag():
     rawg_landing_gcs_bucket = Variable.get('gcs_rawg_api_landing_bucket')
     rawg_api_bq_dataset = Variable.get('gcp_bq_dataset')
     gcp_project_name = Variable.get('gcp_project_id')
+
+    # Check hibernation is close or not
+    @task
+    def check_hibernation(**context):
+        hibernation_start = datetime.strptime('10:52:00', '%H:%M:%S').time()
+        now = datetime.now().time()
+        if now >= hibernation_start:
+            raise AirflowSkipException('Skipping DAG run close to hibernation time')
 
     # Task to get Game IDs to fetch data from in subsequent task
     @task
@@ -469,12 +478,13 @@ def rawg_api_extractor_dag():
         Variable.set("api_page_number", next_page_number)
 
     # DAG Flow
+    hibernation_check = check_hibernation()
     game_ids_list = get_rawg_api_game_ids(rawg_api_key, rawg_page_number)
     game_details_extractor = get_game_id_related_data(rawg_api_key, game_ids_list, rawg_page_number)
     clear_extracted_parquet_files = remove_extracted_api_parquet_files(rawg_landing_gcs_bucket)
     next_page_number = update_page_number(rawg_page_number)
 
-    game_ids_list >> game_details_extractor >> load_rawg_api_ratings_data_to_bq >> load_rawg_api_games_data_to_bq >> load_rawg_api_genres_data_to_bq >> load_rawg_api_platforms_data_to_bq >> load_rawg_api_publishers_data_to_bq >> clear_extracted_parquet_files >> next_page_number
+    hibernation_check >> game_ids_list >> game_details_extractor >> load_rawg_api_ratings_data_to_bq >> load_rawg_api_games_data_to_bq >> load_rawg_api_genres_data_to_bq >> load_rawg_api_platforms_data_to_bq >> load_rawg_api_publishers_data_to_bq >> clear_extracted_parquet_files >> next_page_number
 
 rawg_api_extractor_dag()
 
