@@ -315,8 +315,10 @@ schema_publishers = [
     default_args=default_args,
     description='DAG to fetch RAWG API data from games/ endpoint, convert the JSON to CSV and upload to GCS and then load it in Bigquery',
     # schedule=None,
-    schedule_interval='*/3 * * * *',
-    start_date=datetime(2023, 9, 1),
+    # Commenting out interval as load is done in Bigquery
+    # schedule_interval='*/3 * * * *',
+    # To avoid DAG from triggering when it wakes up from hibernation at 8 UTC
+    start_date=datetime(2023, 9, 1, 8, 2),
     tags=['rawg_api_elt'],
     catchup=False
 )

@@ -19,7 +19,7 @@ Each table will contain on an average `40 rows` of gaming related data so close 
 Flow Diagram
 =============
 
-![Airflow DAG Tasks](Airflow_dag_steps)
+![Airflow DAG Tasks](DAG_Flow_Diagram)
 
 Salient Features
 ================
@@ -40,6 +40,8 @@ This project created using astro cli contains the following parts:
     - `rawg_api_extractor_dag`: This DAG walks through the EL (Extract And Load with slight transforms of flattening json data and enforcing datatype restrictions on dataframe columns) process of extracting data from RAWG API and loading it into Bigquery.
 
         - The pipeline has the following sections :
+            - #### Check Hibernation
+                - `hibernation_check`: This step skips if the dag run is scheduled for a time closer to the hibernation schedule as we use dev deployment of Astro
             - #### Extract Section:
                 - `get_rawg_api_game_ids`: Fetches a list of Game ID's. Uses the following parameters:
                     - `page_size`: How many results can be shown in a single call.
