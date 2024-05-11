@@ -101,6 +101,13 @@ schema_games = [
         "type": "STRING",
         "description": "",
         "fields": []
+    },
+    {
+        "name": "load_date",
+        "mode": "",
+        "type": "STRING",
+        "description": "",
+        "fields": []
     }
 ]
 
@@ -145,6 +152,13 @@ schema_genres = [
     "name": "game_id",
     "mode": "NULLABLE",
     "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "load_date",
+    "mode": "",
+    "type": "STRING",
     "description": "",
     "fields": []
   }
@@ -221,6 +235,13 @@ schema_platforms = [
     "type": "STRING",
     "description": "",
     "fields": []
+  },
+  {
+    "name": "load_date",
+    "mode": "",
+    "type": "STRING",
+    "description": "",
+    "fields": []
   }
 ]
 
@@ -258,6 +279,13 @@ schema_ratings = [
     "name": "game_id",
     "mode": "NULLABLE",
     "type": "INTEGER",
+    "description": "",
+    "fields": []
+  },
+  {
+    "name": "load_date",
+    "mode": "",
+    "type": "STRING",
     "description": "",
     "fields": []
   }
@@ -306,6 +334,13 @@ schema_publishers = [
         "type": "INTEGER",
         "description": "",
         "fields": []
+    },
+    {
+        "name": "load_date",
+        "mode": "",
+        "type": "STRING",
+        "description": "",
+        "fields": []
     }
 ]
 
@@ -319,6 +354,8 @@ schema_publishers = [
     # schedule_interval='*/3 * * * *',
     # To avoid DAG from triggering when it wakes up from hibernation at 8 UTC
     start_date=datetime(2023, 9, 1, 8, 2),
+    # Makes sure only run is active at a point of time to avoid overlapping runs
+    max_active_runs=1,
     tags=['rawg_api_elt'],
     catchup=False
 )

@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+from datetime import datetime
 
 # Logger factory class import
 from utils.logger import LoggerFactory
@@ -66,9 +67,7 @@ class RAWGAPIResultFetcher():
     endpoint_params = {
       'page_size': '10000',
       'page': page_number,
-      'ordering': 'released',
-      'parent_platforms':'1,2,3,4,5,6,7,8,9,10',
-      'dates':'1990-01-01,2023-12-12'
+      'metacritic': '75'
     }
 
     endpoint_response = requests.get(generate_api_url, params=endpoint_params)
@@ -161,6 +160,13 @@ class RAWGAPIResultFetcher():
         publisher_df_flattened = pd.json_normalize(games_json, sep='_', record_path=['publishers'], meta=['id'], meta_prefix='game_')
         publisher_df = pd.concat([publisher_df, publisher_df_flattened], ignore_index=True)
 
+    # Add load_date column for all dataframes
+    games_df['load_date'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    genre_df['load_date'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    platforms_df['load_date'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    publisher_df['load_date'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    ratings_df['load_date'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
     # Enforcing datatypes for columns of games dataframe
     games_df['id'] = games_df['id'].astype(int)
     games_df['released'] = pd.to_datetime(games_df['released'], format='%Y-%m-%d')
@@ -170,11 +176,13 @@ class RAWGAPIResultFetcher():
     games_df['rating_top'] = games_df['rating_top'].astype(int)
     games_df['playtime'] = games_df['playtime'].astype(int)
     games_df['metacritic'] = games_df['metacritic'].astype(str)
+    games_df['load_date'] = games_df['load_date'].astype(str)
 
     # Enforcing datatypes for columns of genres dataframe
     genre_df['id'] = genre_df['id'].astype(int)
     genre_df['games_count'] = genre_df['games_count'].astype(int)
     genre_df['game_id'] = genre_df['game_id'].astype(int)
+    genre_df['load_date'] = genre_df['load_date'].astype(str)
 
     # Enforcing datatypes for columns of platforms dataframe
     platforms_df['released_at'] = pd.to_datetime(platforms_df['released_at'], format='%Y-%m-%d')
@@ -183,17 +191,20 @@ class RAWGAPIResultFetcher():
     platforms_df['platform_games_count'] = platforms_df['platform_games_count'].astype(int)
     platforms_df['game_id'] = platforms_df['game_id'].astype(int)
     platforms_df['platform_year_start'] = platforms_df['platform_year_start'].astype(str)
+    platforms_df['load_date'] = platforms_df['load_date'].astype(str)
 
     # Enforcing datatypes for columns of publisher dataframe
     publisher_df['id'] = publisher_df['id'].astype(int)
     publisher_df['games_count'] = publisher_df['games_count'].astype(int)
     publisher_df['game_id'] = publisher_df['game_id'].astype(int)
+    publisher_df['load_date'] = publisher_df['load_date'].astype(str)
 
     # Enforcing datatypes for columns of ratings dataframe
     ratings_df['id'] = ratings_df['id'].astype(int)
     ratings_df['count'] = ratings_df['count'].astype(int)
     ratings_df['percent'] = ratings_df['percent'].astype(float)
     ratings_df['game_id'] = ratings_df['game_id'].astype(int)
+    ratings_df['load_date'] = ratings_df['load_date'].astype(str)
 
 
     # Log the dimensions of each flattened file for tracking
