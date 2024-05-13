@@ -426,7 +426,7 @@ def rawg_api_extractor_dag():
         get_gcp_connection_and_upload_to_gcs(rawg_landing_gcs_bucket, publisher_df, 'publishers', rawg_page_number)
 
     # Call the above extraction tasks in the group
-    get_rawg_api_game_ids(rawg_api_key, rawg_page_number)
+    game_ids_list = get_rawg_api_game_ids(rawg_api_key, rawg_page_number)
     get_game_id_related_data(rawg_api_key, game_ids_list, rawg_page_number)
 
   @task_group(group_id='load_extracted_data_to_bq')
