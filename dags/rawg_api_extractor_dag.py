@@ -365,15 +365,13 @@ schema_publishers = [
 )
 def rawg_api_extractor_dag():
 
+  rawg_api_key = Variable.get('rawg_api_key')
+  rawg_page_number = int(Variable.get('api_page_number', default_var=1))
+  rawg_landing_gcs_bucket = Variable.get('gcs_rawg_api_landing_bucket')
+  rawg_api_bq_dataset = Variable.get('gcp_bq_dataset')
+  gcp_project_name = Variable.get('gcp_project_id')
   @task_group(group_id='initialize_vars_and_check_hibernation')
   def initialize_vars_and_check_hibernation():
-    # Fetch variable values for API Key and Page Number and Landing bucket URL
-    rawg_api_key = Variable.get('rawg_api_key')
-    rawg_page_number = int(Variable.get('api_page_number', default_var=1))
-    rawg_landing_gcs_bucket = Variable.get('gcs_rawg_api_landing_bucket')
-    rawg_api_bq_dataset = Variable.get('gcp_bq_dataset')
-    gcp_project_name = Variable.get('gcp_project_id')
-
     # Check hibernation is close or not
     @task
     def check_hibernation(**context):
