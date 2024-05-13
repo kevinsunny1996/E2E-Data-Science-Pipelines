@@ -536,8 +536,7 @@ def rawg_api_extractor_dag():
         next_page_number = int(rawg_page_number) + 1
         Variable.set("api_page_number", next_page_number)
 
-    remove_extracted_api_parquet_files(rawg_landing_gcs_bucket)
-    update_page_number(rawg_page_number)
+    remove_extracted_api_parquet_files(rawg_landing_gcs_bucket) >> update_page_number(rawg_page_number)
 
   # DAG Flow
   initialize_vars_and_check_hibernation() >> extract_rawg_api_data() >> load_extracted_data_to_bq() >> post_load_cleanup()
