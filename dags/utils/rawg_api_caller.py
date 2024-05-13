@@ -129,7 +129,8 @@ class RAWGAPIResultFetcher():
       response = requests.request("GET", f"{base_url}/{endpoint}/{game_id}?key={api_key}", headers=headers, data=payload)
       info_logger.info(f'Fetched game related data for {game_id} for {endpoint} endpoint')
 
-      if response.status_code == 200:
+      # If the API call is successful and returns response, then only do further processing
+      if response.status_code == 200 and response['id'] == game_id:
         # Convert to JSON and flatten the response
         games_json = response.json()
 
