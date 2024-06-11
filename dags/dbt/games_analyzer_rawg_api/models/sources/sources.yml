@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: rawg_api_raw
+    database: "{{ var('gcp_project_name') }}"
+    schema: "{{ var('rawg_api_bq_dataset') }}"
+    tables:
+      - name: games
+      - name: ratings
+      - name: publishers
+      - name: genres
+      - name: platforms

@@ -9,7 +9,8 @@ from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 
 # Cosmos an open source Astro library to run DBT jobs
-from cosmos import DbtTaskGroup, ProjectConfig, ExecutionConfig
+from cosmos import DbtTaskGroup, ProjectConfig, ExecutionConfig, RenderConfig
+from cosmos.constants import LoadMode
 
 # Airflow Exceptions class to skip Airflow tasks when a condition is met
 from airflow.exceptions import AirflowSkipException
@@ -360,7 +361,7 @@ schema_publishers = [
     dag_id='rawg_api_extractor_dag',
     default_args=default_args,
     description='DAG to fetch RAWG API data from games/ endpoint, convert the JSON to CSV and upload to GCS and then load it in Bigquery',
-    # schedule=None,
+    schedule=None,
     # Commenting out interval as load is done in Bigquery
     # schedule_interval='*/3 * * * *',
     # To avoid DAG from triggering when it wakes up from hibernation at 8 UTC
@@ -476,7 +477,70 @@ def rawg_api_extractor_dag():
       skip_leading_rows=1  # Skip the header row in the CSV file.
     )
 
-    # ... (other load tasks)
+    load_rawg_api_games_data_to_bq = GCSToBigQueryOperator(
+      task_id=f'load_games_to_bq',
+      bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
+      source_objects=[f'games_{rawg_page_number}.parquet'],  # Set the name of the CSV file in GCS
+      source_format='PARQUET',
+      allow_quoted_newlines=True,
+      ignore_unknown_values=True,
+      destination_project_dataset_table=f'{rawg_api_bq_dataset}.games',  # Set your BigQuery table name to load the data to.
+      gcp_conn_id='gcp',  # Set your GCP connection ID.
+      create_disposition='CREATE_IF_NEEDED',
+      schema_fields=schema_games,
+      autodetect=False,
+      write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
+      skip_leading_rows=1 # Skip the header row in the CSV file.
+    )
+
+    load_rawg_api_genres_data_to_bq = GCSToBigQueryOperator(
+      task_id=f'load_genres_to_bq',
+      bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
+      source_objects=[f'genres_{rawg_page_number}.parquet'],  # Set the name of the CSV file in GCS
+      source_format='PARQUET',
+      allow_quoted_newlines=True,
+      ignore_unknown_values=True,
+      destination_project_dataset_table=f'{rawg_api_bq_dataset}.genres',  # Set your BigQuery table name to load the data to.
+      gcp_conn_id='gcp',  # Set your GCP connection ID.
+      create_disposition='CREATE_IF_NEEDED',
+      write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
+      schema_fields=schema_genres,
+      autodetect=False,
+      skip_leading_rows=1 # Skip the header row in the CSV file.
+    )
+
+    load_rawg_api_platforms_data_to_bq = GCSToBigQueryOperator(
+      task_id=f'load_platforms_to_bq',
+      bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
+      source_objects=[f'platforms_{rawg_page_number}.parquet'],  # Set the name of the CSV file in GCS
+      source_format='PARQUET',
+      allow_quoted_newlines=True,
+      ignore_unknown_values=True,
+      destination_project_dataset_table=f'{rawg_api_bq_dataset}.platforms',  # Set your BigQuery table name to load the data to.
+      gcp_conn_id='gcp',  # Set your GCP connection ID.
+      create_disposition='CREATE_IF_NEEDED',
+      schema_fields=schema_platforms,
+      autodetect=False,
+      write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
+      skip_leading_rows=1 # Skip the header row in the CSV file.
+    )
+
+    load_rawg_api_publishers_data_to_bq = GCSToBigQueryOperator(
+      task_id=f'load_publishers_to_bq',
+      bucket=rawg_landing_gcs_bucket,  # Set your GCS bucket name to pick file from.
+      source_objects=[f'publishers_{rawg_page_number}.parquet'],  # Set the name of the CSV file in GCS
+      source_format='PARQUET',
+      destination_project_dataset_table=f'{rawg_api_bq_dataset}.publishers',  # Set your BigQuery table name to load the data to.
+      gcp_conn_id='gcp',  # Set your GCP connection ID.
+      create_disposition='CREATE_IF_NEEDED',
+      write_disposition='WRITE_APPEND',  # If the table already exists, BigQuery appends the data to the table.
+      skip_leading_rows=1, # Skip the header row in the CSV file.
+      autodetect=False,
+      schema_fields=schema_publishers,
+      allow_quoted_newlines=True,
+      ignore_unknown_values=True,
+      max_bad_records=40
+    )
 
     # DAG Flow between load steps
     load_rawg_api_ratings_data_to_bq >> load_rawg_api_games_data_to_bq >> load_rawg_api_genres_data_to_bq >> load_rawg_api_platforms_data_to_bq >> load_rawg_api_publishers_data_to_bq
@@ -520,10 +584,10 @@ def rawg_api_extractor_dag():
     remove_extracted_api_parquet_files(rawg_landing_gcs_bucket) >> update_page_number(rawg_page_number)
 
   # Define the DAG structure
-  initialize_vars_and_check_hibernation()
-  extract_rawg_api_data()
-  load_extracted_data_to_bq()
-  post_load_cleanup()
+  # initialize_vars_and_check_hibernation()
+  # extract_rawg_api_data()
+  # load_extracted_data_to_bq()
+  # post_load_cleanup()
 
 
   transform_loaded_rawg_data = DbtTaskGroup(
@@ -531,13 +595,23 @@ def rawg_api_extractor_dag():
     profile_config = create_dbt_profile('gcp_bq_gcs', gcp_project_name, rawg_api_bq_dataset),
     # Project Config 
     project_config = ProjectConfig(
-      dbt_project_path=DBT_PROJECT_PATH
+      dbt_project_path=DBT_PROJECT_PATH,
+      models_relative_path="models",
+      dbt_vars={
+        "gcp_project_name": gcp_project_name, 
+        "rawg_api_bq_dataset": rawg_api_bq_dataset
+      }
     ),
     # Execution Config
     execution_config = ExecutionConfig(
       dbt_executable_path=DBT_EXECUTABLE_PATH
-    )
-
+    ),
+    render_config = RenderConfig(
+      load_method=LoadMode.DBT_LS
+    ),
+    operator_args = {
+      "install_deps": True
+    }
   )
 
   # DAG Flow
