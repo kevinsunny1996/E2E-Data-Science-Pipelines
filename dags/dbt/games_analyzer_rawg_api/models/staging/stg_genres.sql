@@ -1,6 +1,6 @@
 -- models/staging/stg_genres.sql
 
--- Define the model using the raw publishers data source
+-- Define the model using the raw genres data source
 {{ config(materialized='ephemeral') }}
 
 WITH cleaned_raw_genres AS (

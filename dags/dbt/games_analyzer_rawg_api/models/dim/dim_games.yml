@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: dim_games
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+        description: Game ID of a particular game.
+
+      - name: game_name
+        tests:
+          - not_null
+        description: Name of the game , eg - Witcher 3, GTA V, etc.
+
+      - name: game_slug
+        tests:
+          - not_null
+        description: Slug version of the game name, eg- witcher-3, gta-v, etc.
+
+      - name: description_raw
+        description: Description of the game in raw format.
+      
+      - name: game_release_date
+        description: Release date of the game.
+      
+      - name: tba
+        description: Is the game To be Announced or not.
+
+      - name: game_updated_at
+        description: Last updated date of the game from RAWG API side.
+
+
+    description: |
+      This model represents the dimension games table.

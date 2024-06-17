@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: bridge_games_genre
+    columns:
+      - name: game_genre_bridge_id
+        tests:
+          - not_null
+          - unique
+        description: Surrogate key for the bridge table created from Game ID and Genre ID.
+
+      - name: game_id
+        tests:
+          - not_null
+        description: The ID of the game.
+
+      - name: genre_id
+        tests:
+          - not_null
+        description: Genre ID of the particular Genre the game is classified as.
+        
+    description: |
+      This model represents the bridge table between games and genres.

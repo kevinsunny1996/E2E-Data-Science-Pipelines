@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: dim_platforms
+    columns:
+      - name: platform_id
+        tests:
+          - not_null
+        description: Platform ID of the platform on which game is released.
+
+      - name: platform_name
+        tests:
+          - not_null
+        description: The name of the Platform eg. PlayStation, Xbox, etc.
+
+      - name: game_released_at_platform_date
+        description: Date on which the game was released on the platform.
+
+      - name: game_id
+        tests:
+          - not_null
+        description: Foreign key game id pertaining to the platform.
+
+    description: |
+      This model represents the dimension platforms table.

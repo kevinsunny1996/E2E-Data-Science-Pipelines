@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: dim_ratings
+    columns:
+      - name: rating_id
+        tests:
+          - not_null
+          - unique
+        description: Rounded off rating given by users.
+
+      - name: rating_category
+        tests:
+          - not_null
+          - unique
+        description: The category of the rating given by user.
+
+      - name: rating_percentage
+        tests:
+          - not_null
+        description: Percentage share of Ratings for the games extracted.
+
+      - name: rating_count
+        tests:
+          - not_null
+        description: Number of ratings given by users.
+
+    description: |
+      This model represents the dimension table for Ratings which include rating id , name , count and percent of games falling in that category.
+      

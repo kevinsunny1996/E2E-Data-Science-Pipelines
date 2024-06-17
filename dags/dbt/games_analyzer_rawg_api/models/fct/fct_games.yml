@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: fct_games
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+        description: Game ID of a given game sourced from RAWG API.
+
+      - name: rating
+        description: User rating of a given game.
+
+      - name: rating_top
+        description: Rounded off rating given by users.
+
+      - name: playtime
+        description: The average time taken to complete a game.
+
+      - name: metacritic_score
+        description: Metacritic score of the given game.
+
+    description: |
+      Fact table for data extracted and transformed fdrom RAWG API contains quantitative data about games such as ratings, playtime, and metacritic score.
