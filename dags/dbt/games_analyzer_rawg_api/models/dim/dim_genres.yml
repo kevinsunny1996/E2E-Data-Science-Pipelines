@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: dim_genres
+    columns:
+      - name: genre_id
+        tests:
+          - not_null
+          - unique
+        description: Genre ID for a particular genre.
+
+      - name: genre_name
+        tests:
+          - not_null
+        description: Genre name for the given Genre ID.
+
+      - name: genre_games_count
+        tests:
+          - not_null
+        description: Count of games per Genre
+
+    description: |
+      This model represents the Genre dimensions which involve Genre ID, Genre Name and count of games for that Genre.

@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: dim_publishers
+    columns:
+      - name: publisher_id
+        tests:
+          - not_null
+          - unique
+        description: Publisher ID for the game publisher.
+
+      - name: publisher_name
+        tests:
+          - not_null
+        description: Name of the game publisher, eg- Rockstar Games, Ubisoft, etc.
+
+      - name: publishers_game_count
+        tests:
+          - not_null
+        description: Number of games published under a given publisher.
+
+    description: |
+      This model represents the dimension publishers table.

@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: bridge_games_platforms
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+        description: The ID of the game.
+
+      - name: platform_id
+        tests:
+          - not_null
+        description: The ID of the platform eg - Xbox , PS5 etc.
+
+      - name: released_at
+        description: Date of release of a game on a particular platform
+        
+    description: |
+      This model represents the bridge table between games and platforms.
