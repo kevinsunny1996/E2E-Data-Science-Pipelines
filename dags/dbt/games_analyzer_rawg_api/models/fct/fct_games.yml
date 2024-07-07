@@ -9,17 +9,33 @@ models:
           - unique
         description: Game ID of a given game sourced from RAWG API.
 
+      - name: rating_id
+        tests:
+          - not_null
+        description: Rounded off rating given by users. Foreign key to dim_ratings table.
+
+      - name: time_id
+        tests:
+          - not_null
+        description: Foreign key of dim_time table which contains data related to the release dates for the games extracted.
+
+      - name: game_name
+        description: Name of the Game extracted from RAWG API.
+
+      - name: game_description
+        description: Game Description a short summary on what the Game is about.
+
       - name: rating
         description: User rating of a given game.
-
-      - name: rating_top
-        description: Rounded off rating given by users.
 
       - name: playtime
         description: The average time taken to complete a game.
 
       - name: metacritic_score
         description: Metacritic score of the given game.
+
+      - name: metacritic_category
+        description: Metacritic Category based on the metacritic score given to the game.
 
     description: |
       Fact table for data extracted and transformed fdrom RAWG API contains quantitative data about games such as ratings, playtime, and metacritic score.

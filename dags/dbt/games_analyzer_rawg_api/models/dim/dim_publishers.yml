@@ -14,11 +14,6 @@ models:
           - not_null
         description: Name of the game publisher, eg- Rockstar Games, Ubisoft, etc.
 
-      - name: publisher_slug
-        tests:
-          - not_null
-        description: Slug version of the publisher name , eg - rockstar-games, ubisoft, etc.
-
       - name: publishers_game_count
         tests:
           - not_null

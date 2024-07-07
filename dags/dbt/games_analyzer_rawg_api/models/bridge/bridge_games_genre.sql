@@ -1,12 +1,14 @@
+-- depends_on: {{ ref('stg_games') }}
+
 {{config(
     materialized = 'incremental'
 )}}
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['game_id', 'genre_id']) }} AS game_genre_bridge_id,
     game_id,
     genre_id
 FROM {{ ref('stg_genres') }}
 {% if is_incremental() %}
-    WHERE load_date = (SELECT MAX(load_date) FROM {{ this }})      
+    WHERE load_date >= (SELECT COALESCE(MAX(load_date), '1900-01-01') FROM {{ this }}) 
+    AND game_id IN (SELECT game_id FROM {{ ref('stg_games') }} WHERE metacritic != 'None')     
 {% endif %}

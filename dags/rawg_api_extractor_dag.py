@@ -394,22 +394,22 @@ def rawg_api_extractor_dag():
   rawg_api_bq_dataset = Variable.get('gcp_bq_dataset')
   gcp_project_name = Variable.get('gcp_project_id')
 
-  @task_group(group_id='initialize_vars_and_check_hibernation')
-  def initialize_vars_and_check_hibernation():
-    # Check hibernation is close or not
-    @task
-    def check_hibernation(**context):
-      """
-      Checks if the DAG run is close to hibernation time and raises an exception to skip the run if so.
-      """
-      hibernation_start = datetime.strptime('10:52:00', '%H:%M:%S').time()
-      hibernation_end = datetime.strptime('08:04:00', '%H:%M:%S').time()
-      now = datetime.now().time()
-      if now >= hibernation_start or now <= hibernation_end:
-        raise AirflowSkipException('Skipping DAG run close to hibernation time')
+  # @task_group(group_id='initialize_vars_and_check_hibernation')
+  # def initialize_vars_and_check_hibernation():
+  #   # Check hibernation is close or not
+  #   @task
+  #   def check_hibernation(**context):
+  #     """
+  #     Checks if the DAG run is close to hibernation time and raises an exception to skip the run if so.
+  #     """
+  #     hibernation_start = datetime.strptime('10:52:00', '%H:%M:%S').time()
+  #     hibernation_end = datetime.strptime('22:04:00', '%H:%M:%S').time()
+  #     now = datetime.now().time()
+  #     if now >= hibernation_start or now <= hibernation_end:
+  #       raise AirflowSkipException('Skipping DAG run close to hibernation time')
 
-    # Check hibernation task callable
-    check_hibernation()
+  #   # Check hibernation task callable
+  #   check_hibernation()
 
   @task_group(group_id='extract_rawg_api_data')
   def extract_rawg_api_data():
@@ -615,6 +615,7 @@ def rawg_api_extractor_dag():
   )
 
   # DAG Flow
-  initialize_vars_and_check_hibernation() >> extract_rawg_api_data() >> load_extracted_data_to_bq() >> post_load_cleanup() >> transform_loaded_rawg_data 
+  # initialize_vars_and_check_hibernation() >> 
+  extract_rawg_api_data() >> load_extracted_data_to_bq() >> post_load_cleanup() >> transform_loaded_rawg_data 
 
 rawg_api_extractor_dag()

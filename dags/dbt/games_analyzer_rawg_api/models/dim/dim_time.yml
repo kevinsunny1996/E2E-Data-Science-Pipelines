@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: dim_time
+    columns:
+      - name: time_id
+        tests:
+          - not_null
+          - unique
+        description: Surrogate Key Time ID corresponding to Game table release date.
+
+      - name: released
+        tests:
+          - not_null
+        description: Release Date of the game
+
+      - name: year
+        tests:
+          - not_null
+        description: Year of the release date for that game
+
+      - name: month
+        description: Release month taken from the release date
+      
+      - name: day
+        description: Release day taken from release date of the game.
+      
+      - name: month_name
+        description: Month name eg - January
+
+      - name: quarter
+        description: Quarter which that particular release date falls into.
+
+
+    description: |
+      This model represents the dimension time table to be later used to analyze trends in gaming.

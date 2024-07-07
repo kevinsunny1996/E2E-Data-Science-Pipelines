@@ -3,12 +3,6 @@ version: 2
 models:
   - name: bridge_games_publishers
     columns:
-      - name: game_publisher_bridge_id
-        tests:
-          - not_null
-          - unique
-        description: Surrogate key for the bridge table created from Game ID and Publisher ID.
-
       - name: game_id
         tests:
           - not_null

@@ -2,17 +2,15 @@
 --- It groups the genres data by genre_id, genre_name, and genre_slug and displays the count of games present for that particular genre.
 
 {{config(
-    materialized = 'incremental',
+    materialized = 'view',
     unique_key = 'genre_id'
 )}}
 
 SELECT 
     genre_id,
     genre_name,
-    genre_slug,
     COUNT(game_id) AS genre_games_count
 FROM {{ ref('stg_genres') }}
-GROUP BY 1, 2, 3
-{% if is_incremental() %}
-    WHERE load_date = (SELECT MAX(load_date) FROM {{ this }})
-{% endif %}
+WHERE game_id IN (SELECT game_id FROM {{ ref('stg_games') }} WHERE metacritic != 'None')
+GROUP BY 1, 2
+ORDER BY 1

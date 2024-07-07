@@ -16,10 +16,8 @@ models:
       - name: game_released_at_platform_date
         description: Date on which the game was released on the platform.
 
-      - name: game_id
-        tests:
-          - not_null
-        description: Foreign key game id pertaining to the platform.
+      - name: platform_games_count
+        description: Count of games pertaining to the respective platform.
 
     description: |
       This model represents the dimension platforms table.

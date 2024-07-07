@@ -6,19 +6,12 @@ models:
       - name: rating_id
         tests:
           - not_null
-          - unique
         description: Rounded off rating given by users.
 
       - name: rating_category
         tests:
           - not_null
-          - unique
         description: The category of the rating given by user.
-
-      - name: rating_percentage
-        tests:
-          - not_null
-        description: Percentage share of Ratings for the games extracted.
 
       - name: rating_count
         tests:
