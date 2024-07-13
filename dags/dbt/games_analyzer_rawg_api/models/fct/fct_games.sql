@@ -3,7 +3,8 @@
 --- All 5 metacritic categories taken from - https://en.wikipedia.org/wiki/Metacritic
 {{config(
     materialized = 'incremental',
-    unique_key = 'game_id'
+    unique_key = 'game_id',
+    incremental_strategy = 'merge'
 )}}
 
 SELECT 
