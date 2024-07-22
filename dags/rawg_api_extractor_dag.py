@@ -29,7 +29,7 @@ from utils.dbt_profile import create_dbt_profile
 default_args = {
     'owner': 'airflow',
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(seconds=5),
 }
 
 DBT_PROJECT_PATH = f"/usr/local/airflow/dags/dbt/games_analyzer_rawg_api"
@@ -369,7 +369,8 @@ schema_publishers = [
     # Makes sure only run is active at a point of time to avoid overlapping runs
     # max_active_runs=1,
     tags=['rawg_api_elt'],
-    catchup=False
+    catchup=False,
+    max_active_tasks=1
 )
 def rawg_api_extractor_dag():
   """
