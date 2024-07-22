@@ -31,8 +31,7 @@ SELECT
         ELSE 'Overwhelming dislike'
     END AS metacritic_category
 FROM unique_stg_games
-WHERE row_num = 1
 {% if is_incremental() %}
-    WHERE load_date >= (SELECT COALESCE(MAX(load_date), '1900-01-01') FROM {{ this }})
+    WHERE row_num = 1 AND load_date >= (SELECT COALESCE(MAX(load_date), '1900-01-01') FROM {{ this }})
     AND metacritic != 'None'
 {% endif %}
