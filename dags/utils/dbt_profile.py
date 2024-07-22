@@ -25,7 +25,7 @@ def create_dbt_profile(gcp_connection: str, gcp_project: str, gcp_bq_dataset: st
     # Retrieve the connection object
     bigquery_dbt_rawg_api = BaseHook.get_connection(gcp_connection).extra_dejson
     info_logger.info(f'BigQuery DBT Connection Details: {bigquery_dbt_rawg_api}')
-    bigquery_service_account = json.loads(bigquery_dbt_rawg_api.get('keyfile_dict'))
+    bigquery_service_account = json.loads(bigquery_dbt_rawg_api.get('extra__google_cloud_platform__keyfile_dict'))
     info_logger.info(f'BigQuery Service Account: {bigquery_service_account}')
     bigquery_project = bigquery_dbt_rawg_api.get('project') 
     info_logger.info(f'BigQuery Project: {bigquery_project}')
