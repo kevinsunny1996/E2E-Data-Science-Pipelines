@@ -7,6 +7,13 @@
     incremental_strategy = 'merge'
 )}}
 
+WITH unique_stg_games AS (
+    SELECT 
+        *,
+        ROW_NUMBER() OVER (PARTITION BY game_id ORDER BY load_date DESC) AS row_num
+    FROM {{ ref('stg_games') }}
+)
+
 SELECT 
     game_id,
     rating_top AS rating_id,
@@ -23,7 +30,8 @@ SELECT
         WHEN CAST(metacritic AS INT64) BETWEEN 20 AND 49 THEN 'Generally unfavorable'
         ELSE 'Overwhelming dislike'
     END AS metacritic_category
-FROM {{ ref('stg_games') }}
+FROM unique_stg_games
+WHERE row_num = 1
 {% if is_incremental() %}
     WHERE load_date >= (SELECT COALESCE(MAX(load_date), '1900-01-01') FROM {{ this }})
     AND metacritic != 'None'
