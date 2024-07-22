@@ -1,7 +1,7 @@
 Overview
 ========
 
-The following data pipeline is part of an ongoing Data Analysis project which involves analyzing Gaming Industry data for the last 30 years from `1990-2023`.
+The following data pipeline is part of an ongoing Data Analysis project which involves analyzing Gaming Industry data for games rated under Metacritic.
 In order to showcase data extraction capabilities , data from readymade sources like Kaggle etc are discouraged and dataset is being built from scratch using [RAWG API](https://rawg.io/apidocs).
 
 Why RAWG API?
@@ -10,11 +10,11 @@ Why RAWG API?
 - Uses API key , so its easier for people dipping their feet in the world of data to implement extraction logic.
 - Has separate links to fetch reddit posts related to a game as well which can be further used for sentiment analysis.
 
-Using the setup that will be talked about below, we would be fetching close to `250` pages worth of gaming data which is currently present at the time of writing in RAWG API side!!!
+Using the setup that will be talked about below, we would be fetching close to `400`+ pages worth of gaming data which is currently present at the time of writing in RAWG API side!!!
 
-There are 5 input files that will be created as part of JSON flattening / normalization to load to respective Bigquery tables resulting in total: `250*5` = `1250` files!!!
+There are 5 input files that will be created as part of JSON flattening / normalization to load to respective Bigquery tables resulting in total: `400*5` = `2000` files!!!
 
-Each table will contain on an average `40 rows` of gaming related data so close to `1250*40` = `50000` 50k rows will be loaded onto Bigquery for this project!!! 
+Each table will contain on an average `40 rows` of gaming related data so close to `2000*40` = `80000` 80k rows will be loaded onto Bigquery for this project as an estimate!!! 
 
 Flow Diagram
 =============
@@ -84,6 +84,21 @@ This project created using astro cli contains the following parts:
                     - `remove_extracted_api_parquet_files`: Uses `GCSHook` to list the objects present in GCS and iterates over each item and delete them using GCSHook `delete` method.
                     - `update_page_number`: Updates the page number airflow variable by 1 so that next run takes into account the next page number results.
 
+            - #### Transform Section:
+                - These steps are done to make the loaded data ready for use in downstream systems for analytics and machine learning purposes.
+                - The section removes those games that have no Metacritic score and release date as well and the platforms which do not have a release date for the said game.
+                - Additionally, it facilitates creation of dimensional data modelling which are the following:
+                    - `fct_games`: Fact table storing factual details regarding a game and related foreign keys to dimension tables.
+                    - `bridge_games_genre`: Bridge table to map the Game ID's to the genres it belongs to.
+                    - `bridge_games_platforms`: Bridge table to map the Game ID's to the platforms it released.
+                    - `bridge_games_publishers`: Bridge table to map the Game ID's to the publishers the game got published under.
+                    - `dim_genres`: Dimension table for Genres and stats related to a particular Genre.
+                    - `dim_platforms`: Dimension table for Platforms and stats related to a particular Platform.
+                    - `dim_publishers`: Dimension table for Publishers and stats related to a particular Publisher.
+                    - `dim_ratings`: Dimension table for Ratings and stats related to a particular Rating Category.
+                    - `dim_time`: Dimension table for Release Date and stats related to a particular release date for games.
+                - Additionally , the dimension tables are created as views. Bridge and Fact tables are incrementally updated.
+                - Generic tests include checking for not-null and unique column.
 
 - Dockerfile: This file contains a versioned Astro Runtime Docker image that provides a differentiated Airflow experience. If you want to execute other commands or overrides at runtime, specify them here.
 - include: This folder contains any additional files that you want to include as part of your project. It is empty by default.

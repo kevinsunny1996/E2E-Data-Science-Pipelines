@@ -38,4 +38,4 @@ models:
         description: Metacritic Category based on the metacritic score given to the game.
 
     description: |
-      Fact table for data extracted and transformed fdrom RAWG API contains quantitative data about games such as ratings, playtime, and metacritic score.
+      Fact table for data extracted and transformed from RAWG API contains quantitative data about games such as ratings, playtime, and metacritic score.
