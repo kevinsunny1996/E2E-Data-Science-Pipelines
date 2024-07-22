@@ -19,5 +19,5 @@ models:
         description: Number of ratings given by users.
 
     description: |
-      This model represents the dimension table for Ratings which include rating id , name , count and percent of games falling in that category.
+      This model represents the dimension table for Ratings which include rating id , name , count of games falling in that category.
       

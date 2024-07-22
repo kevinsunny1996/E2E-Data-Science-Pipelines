@@ -3,6 +3,12 @@ version: 2
 models:
   - name: bridge_games_genre
     columns:
+      - name: bridge_gg_id
+        tests:
+          - not_null
+          - unique
+        description: Surrogate key to allow only unique entries of combination to be updated in the table.
+
       - name: game_id
         tests:
           - not_null
