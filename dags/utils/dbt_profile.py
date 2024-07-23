@@ -41,7 +41,7 @@ def create_dbt_profile(gcp_connection: str, gcp_project: str, gcp_bq_dataset: st
         profile_args={
           'project': gcp_project,
           'dataset': gcp_bq_dataset,
-          'threads': 1,
+          'threads': 3,
           'keyfile_json': bigquery_service_account,
           'location': 'us-east1'
         }

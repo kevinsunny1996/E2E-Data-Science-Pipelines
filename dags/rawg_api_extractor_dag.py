@@ -370,7 +370,7 @@ schema_publishers = [
     # max_active_runs=1,
     tags=['rawg_api_elt'],
     catchup=False,
-    max_active_tasks=1
+    max_active_tasks=4
 )
 def rawg_api_extractor_dag():
   """
