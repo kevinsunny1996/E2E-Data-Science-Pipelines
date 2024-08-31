@@ -592,6 +592,7 @@ def rawg_api_extractor_dag():
 
 
   transform_loaded_rawg_data = DbtTaskGroup(
+    group_id='cached_venv_dbt_tasks',
     # Profile configuration
     profile_config = create_dbt_profile('gcp_bq_gcs', gcp_project_name, rawg_api_bq_dataset),
     # Project Config 
@@ -605,7 +606,8 @@ def rawg_api_extractor_dag():
     ),
     # Execution Config
     execution_config = ExecutionConfig(
-      dbt_executable_path=DBT_EXECUTABLE_PATH
+      execution_mode=ExecutionMode.VIRTUALENV,
+      virtualenv_dir=DBT_EXECUTABLE_PATH.parent.parent
     ),
     render_config = RenderConfig(
       load_method=LoadMode.DBT_LS
