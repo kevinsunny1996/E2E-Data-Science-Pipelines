@@ -608,7 +608,8 @@ def rawg_api_extractor_dag():
     # Execution Config
     execution_config = ExecutionConfig(
       execution_mode=ExecutionMode.VIRTUALENV,
-      virtualenv_dir=Path(DBT_EXECUTABLE_PATH).parent.parent
+      virtualenv_dir=Path(DBT_EXECUTABLE_PATH).parent.parent,
+      dbt_executable_path=DBT_EXECUTABLE_PATH
     ),
     render_config = RenderConfig(
       load_method=LoadMode.DBT_LS
