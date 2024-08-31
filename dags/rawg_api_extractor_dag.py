@@ -1,5 +1,6 @@
 # os module to get environment vars
 import os
+from pathlib import Path
 
 # Airflow modules import
 from datetime import datetime, timedelta
@@ -607,7 +608,7 @@ def rawg_api_extractor_dag():
     # Execution Config
     execution_config = ExecutionConfig(
       execution_mode=ExecutionMode.VIRTUALENV,
-      virtualenv_dir=DBT_EXECUTABLE_PATH.parent.parent
+      virtualenv_dir=Path(DBT_EXECUTABLE_PATH).parent.parent
     ),
     render_config = RenderConfig(
       load_method=LoadMode.DBT_LS
