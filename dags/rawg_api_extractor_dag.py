@@ -10,7 +10,7 @@ from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQue
 
 # Cosmos an open source Astro library to run DBT jobs
 from cosmos import DbtTaskGroup, ProjectConfig, ExecutionConfig, RenderConfig
-from cosmos.constants import LoadMode
+from cosmos.constants import LoadMode, ExecutionMode
 
 # Airflow Exceptions class to skip Airflow tasks when a condition is met
 from airflow.exceptions import AirflowSkipException
