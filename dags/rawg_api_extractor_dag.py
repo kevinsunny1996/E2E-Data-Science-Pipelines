@@ -621,6 +621,6 @@ def rawg_api_extractor_dag():
 
   # DAG Flow
   # initialize_vars_and_check_hibernation() >> 
-  extract_rawg_api_data() >> load_extracted_data_to_bq() >> post_load_cleanup() >> transform_loaded_rawg_data 
+  extract_rawg_api_data() >> load_extracted_data_to_bq() >> [post_load_cleanup(), transform_loaded_rawg_data] 
 
 rawg_api_extractor_dag()

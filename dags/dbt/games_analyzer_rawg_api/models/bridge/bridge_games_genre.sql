@@ -3,7 +3,8 @@
 {{config(
     materialized = 'incremental',
     unique_key = 'bridge_gg_id',
-    incremental_strategy = 'merge'
+    incremental_strategy = 'merge',
+    merge_update_columns = ['game_id','genre_id']
 )}}
 
 SELECT
