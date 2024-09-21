@@ -3,8 +3,7 @@
 {{config(
     materialized = 'incremental',
     unique_key = 'bridge_gpl_id',
-    incremental_strategy = 'merge',
-    merge_update_columns = ['game_id','platform_id','released_at']
+    incremental_strategy = 'delete+insert'
 )}}
 
 SELECT
