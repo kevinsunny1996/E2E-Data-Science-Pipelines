@@ -3,7 +3,7 @@
 {{config(
     materialized = 'incremental',
     unique_key = 'bridge_gpl_id',
-    incremental_strategy = 'insert_overwrite'
+    incremental_strategy = 'merge'
 )}}
 
 SELECT
