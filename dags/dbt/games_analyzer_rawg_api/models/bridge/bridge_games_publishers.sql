@@ -3,7 +3,7 @@
 {{config(
     materialized = 'incremental',
     unique_key = 'bridge_gpu_id',
-    incremental_strategy = 'delete+insert'
+    incremental_strategy = 'insert_overwrite'
 )}}
 
 SELECT
