@@ -22,7 +22,7 @@ from airflow.models import Variable
 
 # Custom modules import
 from utils.rawg_api_caller import RAWGAPIResultFetcher
-from utils.gcp_utils import get_gcp_connection_and_upload_to_gcs
+from utils.gcp_utils import get_gcp_connection_and_upload_to_gcs, check_bq_tables_for_extracted_game_ids
 from utils.dbt_profile import create_dbt_profile
 
 
@@ -431,6 +431,11 @@ def rawg_api_extractor_dag():
       rawg_http_client_games_list = RAWGAPIResultFetcher()
       return rawg_http_client_games_list.get_unique_ids_per_endpoint(api_key, page_number)
 
+    # Task to check if the extracted game IDs are present and remove if present
+    @task
+    def clean_extracted_game_ids(extracted_games_list: list, bq_dataset_name: str):
+      return check_bq_tables_for_extracted_game_ids(extracted_games_list, bq_dataset_name)
+
     # Task to use the game IDs to iterate upon and create the 5 flattened tables to be uploaded to GCS and then loaded to BigQuery later
     @task
     def get_game_id_related_data(api_key: str, game_ids_list: list, page_number: int) -> None:
@@ -458,7 +463,8 @@ def rawg_api_extractor_dag():
 
     # Call the above extraction tasks in the group
     game_ids_list = get_rawg_api_game_ids(rawg_api_key, rawg_page_number)
-    get_game_id_related_data(rawg_api_key, game_ids_list, rawg_page_number)
+    cleaned_game_ids = clean_extracted_game_ids(game_ids_list, rawg_api_bq_dataset)
+    get_game_id_related_data(rawg_api_key, cleaned_game_ids, rawg_page_number)
 
   @task_group(group_id='load_extracted_data_to_bq')
   def load_extracted_data_to_bq():

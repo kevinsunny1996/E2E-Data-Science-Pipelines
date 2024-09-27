@@ -1,9 +1,10 @@
 # Airflow Base Hook to get connection
 from airflow.hooks.base import BaseHook
 from airflow.providers.google.common.hooks.base_google import GoogleBaseHook
+from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 
 # GCS Python Library
-from google.cloud import storage
+from google.cloud import storage, bigquery
 
 # Custom Logging module
 from utils.logger import LoggerFactory
@@ -82,3 +83,52 @@ def get_gcp_connection_and_upload_to_gcs(bucket_name: str, dataframe_name: pd.Da
         error_logger.error(f'Received following error while uploading {blob_name}, see full trace : {e}')
         # Print stacktrace for the whole error in the console
         traceback.print_exc()
+
+
+# Function to get Airflow Service Account connection to GCP and check existence of Game IDs in Bigquery tables before loading
+def check_bq_tables_for_extracted_game_ids(extracted_game_ids: list, bq_dataset: str):
+    # TODOS
+    """
+    Using the list received in the extraction call , convert it into comma separated string to be sent into IN clause.
+    Use bridge_games_genre or any bridge table as the problem happens for these table during merge incremental update as source has duplicates.
+    Fetch the distinct game_id for all those in the extracted list and compare with the list values.
+    Log the following details - Comma separated string , game_id present in bridge table for the list, final result for visibility.
+    Return the modified list to curb duplicate entries from forming in source tables in the first place.
+    """
+    bq_conn = 'gcp'
+
+    # Create a BigQuery Hook 
+    bq_hook = BigQueryHook(
+        gcp_conn_id=bq_conn,
+        delegate_to=None,
+        use_legacy_sql=False,
+        location=None,
+        api_resource_configs=None,
+        impersonation_chain=None,
+    )
+
+    # Stitch the game ID's to a comma separated string
+    list_of_ids_to_detect = ','.join([str(game_id) for game_id in extracted_game_ids])
+    info_logger.info(f'List of IDs extracted converted to comma separated string format: {list_of_ids_to_detect}')
+
+    # Query to run against the extracted IDs
+    detector_query = f"""
+        SELECT DISTINCT(game_id) FROM
+        `{bq_dataset}.bridge_games_genre` WHERE
+        game_id IN ({list_of_ids_to_detect})
+    """
+    info_logger.info(f'Preparing to run the following query: {detector_query}')
+
+    # Run the query and store the results to be sent downstream
+    conn = bq_hook.get_conn()
+    cursor = conn.cursor()
+    cursor.execute(detector_query)
+
+    ids_present_in_bq = [row[0] for row in cursor.fetchall()]
+    info_logger.info(f'following are the game ids present in BigQuery table - {ids_present_in_bq}')
+
+    # Run against the extracted list and get the difference
+    cleaned_game_ids = [game_id for game_id in extracted_game_ids if game_id not in ids_present_in_bq]
+    info_logger.info(f'Returned difference - {cleaned_game_ids}')
+
+    return cleaned_game_ids
