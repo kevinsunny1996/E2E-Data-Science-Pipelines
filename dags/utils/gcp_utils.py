@@ -86,7 +86,7 @@ def get_gcp_connection_and_upload_to_gcs(bucket_name: str, dataframe_name: pd.Da
 
 
 # Function to get Airflow Service Account connection to GCP and check existence of Game IDs in Bigquery tables before loading
-def check_bq_tables_for_extracted_game_ids(extracted_game_ids: list, bq_dataset: str):
+def check_bq_tables_for_extracted_game_ids(extracted_game_ids: list, bq_dataset: str, project_id: str):
     # TODOS
     """
     Using the list received in the extraction call , convert it into comma separated string to be sent into IN clause.
@@ -114,7 +114,7 @@ def check_bq_tables_for_extracted_game_ids(extracted_game_ids: list, bq_dataset:
     # Query to run against the extracted IDs
     detector_query = f"""
         SELECT DISTINCT(game_id) FROM
-        `{bq_dataset}.bridge_games_genre` WHERE
+        `{project_id}.{bq_dataset}.bridge_games_genre` WHERE
         game_id IN ({list_of_ids_to_detect})
     """
     info_logger.info(f'Preparing to run the following query: {detector_query}')

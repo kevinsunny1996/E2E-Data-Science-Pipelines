@@ -433,8 +433,8 @@ def rawg_api_extractor_dag():
 
     # Task to check if the extracted game IDs are present and remove if present
     @task
-    def clean_extracted_game_ids(extracted_games_list: list, bq_dataset_name: str):
-      return check_bq_tables_for_extracted_game_ids(extracted_games_list, bq_dataset_name)
+    def clean_extracted_game_ids(extracted_games_list: list, bq_dataset_name: str, project_id: str):
+      return check_bq_tables_for_extracted_game_ids(extracted_games_list, bq_dataset_name, project_id)
 
     # Task to use the game IDs to iterate upon and create the 5 flattened tables to be uploaded to GCS and then loaded to BigQuery later
     @task
@@ -463,7 +463,7 @@ def rawg_api_extractor_dag():
 
     # Call the above extraction tasks in the group
     game_ids_list = get_rawg_api_game_ids(rawg_api_key, rawg_page_number)
-    cleaned_game_ids = clean_extracted_game_ids(game_ids_list, rawg_api_bq_dataset)
+    cleaned_game_ids = clean_extracted_game_ids(game_ids_list, rawg_api_bq_dataset, gcp_project_name)
     get_game_id_related_data(rawg_api_key, cleaned_game_ids, rawg_page_number)
 
   @task_group(group_id='load_extracted_data_to_bq')
