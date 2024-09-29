@@ -100,6 +100,7 @@ def check_bq_tables_for_extracted_game_ids(extracted_game_ids: list, bq_dataset:
     # Create a BigQuery Hook 
     bq_hook = BigQueryHook(
         gcp_conn_id=bq_conn,
+        location='us-east1',
         delegate_to=None,
         use_legacy_sql=False,
         location=None,
