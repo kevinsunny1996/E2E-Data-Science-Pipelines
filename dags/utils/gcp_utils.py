@@ -103,7 +103,6 @@ def check_bq_tables_for_extracted_game_ids(extracted_game_ids: list, bq_dataset:
         location='us-east1',
         delegate_to=None,
         use_legacy_sql=False,
-        location=None,
         api_resource_configs=None,
         impersonation_chain=None,
     )
