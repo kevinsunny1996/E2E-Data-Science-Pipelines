@@ -1,4 +1,4 @@
-FROM quay.io/astronomer/astro-runtime:12.1.0
+FROM quay.io/astronomer/astro-runtime:12.2.0
 ENV AIRFLOW__CORE__TEST_CONNECTION=Enabled
 
 # install dbt into a virtual environment
