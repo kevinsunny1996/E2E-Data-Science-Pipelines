@@ -30,7 +30,7 @@ from utils.dbt_profile import create_dbt_profile
 
 
 # Airflow env settings
-DEPLOYMENT_START_TIME_UTC = "08:00" # Time when the airflow env is brought up
+DEPLOYMENT_START_TIME_UTC = "20:10" # Time when the airflow env is brought up
 ACTIVE_DURATION_MINUTES = 180 # Time for which the airflow env remains up and running
 EARLY_SKIP_TIME_THRESHOLD = 5 # how many mins post bringing up are we good to proceed 
 LATE_SKIP_TIME_THRESHOLD = 15 # how many mins prior to shutting down are we good to stop
@@ -39,7 +39,7 @@ SCHEDULE_INTERVAL = "*/7 * * * *" # Run at every 7 minute interval
 # Default DAG arguments
 default_args = {
     'owner': 'airflow',
-    'retries': 1,
+    'retries': 3,
     'retry_delay': timedelta(seconds=5),
 }
 
