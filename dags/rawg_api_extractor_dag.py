@@ -2,8 +2,11 @@
 import os
 from pathlib import Path
 
-# Airflow modules import
+# Date modules to tweak schedule
 from datetime import datetime, timedelta
+
+# Airflow modules import
+from airflow.utils.timezone import utcnow
 from airflow.decorators import dag, task, task_group
 from airflow.operators.python import PythonOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
@@ -25,6 +28,13 @@ from utils.rawg_api_caller import RAWGAPIResultFetcher
 from utils.gcp_utils import get_gcp_connection_and_upload_to_gcs, check_bq_tables_for_extracted_game_ids
 from utils.dbt_profile import create_dbt_profile
 
+
+# Airflow env settings
+DEPLOYMENT_START_TIME_UTC = "08:00" # Time when the airflow env is brought up
+ACTIVE_DURATION_MINUTES = 180 # Time for which the airflow env remains up and running
+EARLY_SKIP_TIME_THRESHOLD = 5 # how many mins post bringing up are we good to proceed 
+LATE_SKIP_TIME_THRESHOLD = 15 # how many mins prior to shutting down are we good to stop
+SCHEDULE_INTERVAL = "*/7 * * * *" # Run at every 7 minute interval
 
 # Default DAG arguments
 default_args = {
@@ -361,14 +371,13 @@ schema_publishers = [
 @dag(
     dag_id='rawg_api_extractor_dag',
     default_args=default_args,
-    description='DAG to fetch RAWG API data from games/ endpoint, convert the JSON to CSV and upload to GCS and then load it in Bigquery',
-    schedule=None,
-    # Commenting out interval as load is done in Bigquery
-    # schedule_interval='*/3 * * * *',
+    description='DAG to fetch RAWG API data from games/ endpoint, convert the JSON to CSV and upload to GCS and then load and transform it in Bigquery',
+    # schedule=None,
+    schedule_interval=SCHEDULE_INTERVAL,
     # To avoid DAG from triggering when it wakes up from hibernation at 8 UTC
     start_date=datetime(2023, 9, 1),
     # Makes sure only run is active at a point of time to avoid overlapping runs
-    # max_active_runs=1,
+    max_active_runs=1,
     tags=['rawg_api_elt'],
     catchup=False,
     max_active_tasks=3
@@ -396,22 +405,40 @@ def rawg_api_extractor_dag():
   rawg_api_bq_dataset = Variable.get('gcp_bq_dataset')
   gcp_project_name = Variable.get('gcp_project_id')
 
-  # @task_group(group_id='initialize_vars_and_check_hibernation')
-  # def initialize_vars_and_check_hibernation():
-  #   # Check hibernation is close or not
-  #   @task
-  #   def check_hibernation(**context):
-  #     """
-  #     Checks if the DAG run is close to hibernation time and raises an exception to skip the run if so.
-  #     """
-  #     hibernation_start = datetime.strptime('10:52:00', '%H:%M:%S').time()
-  #     hibernation_end = datetime.strptime('22:04:00', '%H:%M:%S').time()
-  #     now = datetime.now().time()
-  #     if now >= hibernation_start or now <= hibernation_end:
-  #       raise AirflowSkipException('Skipping DAG run close to hibernation time')
+  @task.branch()
+  def dag_runtime_safety_check() -> str:
+    """
+    Checks the conditions if we're good to run DAGs at scheduled intervals while the airflow env is up
 
-  #   # Check hibernation task callable
-  #   check_hibernation()
+    Args:
+      None.
+
+    Returns:
+      str object as skip_task or run_task to execute downstream steps accordingly
+    """
+    deployment_start_time = datetime.strptime(DEPLOYMENT_START_TIME_UTC, "%H:%M").time()
+    current_time = utcnow().time()
+
+    # calculate start and end thresholds
+    early_skip_time = (datetime.combine(datetime.today(), deployment_start_time) 
+                      + timedelta(minutes=EARLY_SKIP_TIME_THRESHOLD)).time()
+    
+    late_skip_time = (datetime.combine(datetime.today(), deployment_start_time) 
+                      + timedelta(minutes=(ACTIVE_DURATION_MINUTES - LATE_SKIP_TIME_THRESHOLD))).time()
+    
+    # SKIP if the current time is within the hibernation time
+    if current_time < early_skip_time or current_time > late_skip_time:
+      return "skip_task"
+    else:
+      return "run_task"
+
+  @task
+  def skip_task() -> None:
+    print("Skipping DAG run as environment hibernation time is close")    
+
+  @task
+  def run_task() -> None:
+    print("Running DAG as environment is ready to process!!!")
 
   @task_group(group_id='extract_rawg_api_data')
   def extract_rawg_api_data():
@@ -591,13 +618,6 @@ def rawg_api_extractor_dag():
 
     remove_extracted_api_parquet_files(rawg_landing_gcs_bucket) >> update_page_number(rawg_page_number)
 
-  # Define the DAG structure
-  # initialize_vars_and_check_hibernation()
-  # extract_rawg_api_data()
-  # load_extracted_data_to_bq()
-  # post_load_cleanup()
-
-
   transform_loaded_rawg_data = DbtTaskGroup(
     group_id='cached_venv_dbt_tasks',
     # Profile configuration
@@ -626,7 +646,7 @@ def rawg_api_extractor_dag():
   )
 
   # DAG Flow
-  # initialize_vars_and_check_hibernation() >> 
-  extract_rawg_api_data() >> load_extracted_data_to_bq() >> [post_load_cleanup(), transform_loaded_rawg_data] 
+  dag_runtime_safety_check() >> skip_task()
+  dag_runtime_safety_check() >> run_task() >> extract_rawg_api_data() >> load_extracted_data_to_bq() >> [post_load_cleanup(), transform_loaded_rawg_data] 
 
 rawg_api_extractor_dag()
