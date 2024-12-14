@@ -30,7 +30,7 @@ from utils.dbt_profile import create_dbt_profile
 
 
 # Airflow env settings
-DEPLOYMENT_START_TIME_UTC = "20:10" # Time when the airflow env is brought up
+DEPLOYMENT_START_TIME_UTC = "08:00" # Time when the airflow env is brought up
 ACTIVE_DURATION_MINUTES = 180 # Time for which the airflow env remains up and running
 EARLY_SKIP_TIME_THRESHOLD = 5 # how many mins post bringing up are we good to proceed 
 LATE_SKIP_TIME_THRESHOLD = 15 # how many mins prior to shutting down are we good to stop
@@ -646,7 +646,6 @@ def rawg_api_extractor_dag():
   )
 
   # DAG Flow
-  dag_runtime_safety_check() >> skip_task()
-  dag_runtime_safety_check() >> run_task() >> extract_rawg_api_data() >> load_extracted_data_to_bq() >> [post_load_cleanup(), transform_loaded_rawg_data] 
+  dag_runtime_safety_check() >> [skip_task(), run_task()] >> extract_rawg_api_data() >> load_extracted_data_to_bq() >> [post_load_cleanup(), transform_loaded_rawg_data] 
 
 rawg_api_extractor_dag()
