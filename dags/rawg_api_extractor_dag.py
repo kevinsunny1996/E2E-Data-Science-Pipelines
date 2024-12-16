@@ -646,6 +646,11 @@ def rawg_api_extractor_dag():
   )
 
   # DAG Flow
-  dag_runtime_safety_check() >> [skip_task(), run_task()] >> extract_rawg_api_data() >> load_extracted_data_to_bq() >> [post_load_cleanup(), transform_loaded_rawg_data] 
+  skip_check = dag_runtime_safety_check()
+  skip_dag = skip_task()
+  run_dag = run_task()
+
+  skip_check >> skip_dag
+  skip_check >> run_dag >> extract_rawg_api_data() >> load_extracted_data_to_bq() >> [post_load_cleanup(), transform_loaded_rawg_data] 
 
 rawg_api_extractor_dag()
