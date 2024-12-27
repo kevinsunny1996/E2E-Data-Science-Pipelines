@@ -18,5 +18,5 @@ SELECT
         ELSE 'Q4'
     END AS quarter
 FROM {{ ref('stg_games') }}
-WHERE released IS NOT NULL and metacritic!='None'
+WHERE released IS NOT NULL and released != 'NaT' and metacritic!='None'
 GROUP BY released
