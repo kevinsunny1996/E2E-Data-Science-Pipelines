@@ -14,6 +14,7 @@ SELECT
 FROM {{ ref('stg_platforms') }}
 {% if is_incremental() %}
     WHERE load_date >= (SELECT COALESCE(MAX(load_date), '1900-01-01') FROM {{ this }}) 
+    AND platform_row_id = 1
     AND game_id IN (SELECT game_id FROM {{ ref('fct_games') }} WHERE metacritic_score != 'None')
     AND released_at != 'NaT'
 {% endif %}
