@@ -132,3 +132,12 @@ def check_bq_tables_for_extracted_game_ids(extracted_game_ids: list, bq_dataset:
     info_logger.info(f'Returned difference - {cleaned_game_ids}')
 
     return cleaned_game_ids
+
+def dedup_source_tables() -> None:
+    """
+    We'll be making use of SCD Type 1 to update the source tables with the new data from the extracted data 
+    as and when API gets data for Game IDs. This function will be used to deduplicate the source tables (games, publishers, genres, ratings, platforms)
+    if the game ID pertaining to the API call has any field update. Using basic SQL and window functions to achieve the same by creating a temp table 
+    , truncate the source table and insert back the deduped records or the latest uploaded records using ROW_NUMBER.
+    """
+    pass

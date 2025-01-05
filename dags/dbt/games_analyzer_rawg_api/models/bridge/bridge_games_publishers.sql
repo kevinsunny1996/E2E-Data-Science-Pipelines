@@ -13,5 +13,6 @@ SELECT
 FROM {{ ref('stg_publishers') }}
 {% if is_incremental() %}
     WHERE load_date >= (SELECT COALESCE(MAX(load_date), '1900-01-01') FROM {{ this }}) 
+    AND publisher_row_id = 1
     AND game_id IN (SELECT game_id FROM {{ ref('fct_games') }} WHERE metacritic_score != 'None')
 {% endif %}
